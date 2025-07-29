@@ -1,6 +1,6 @@
 @import "tailwindcss";
 .hero {
-  background-image: url(./assets/abstra.jpg);
+  background-image: url(./assets/hero.jpg);
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
@@ -9,9 +9,22 @@
 *{
   font-family: 'Montserrat';
 }
+
 .logbtn{
   background-color: rgba(167, 247, 167, 0.733);
 }
 .logbtn:hover{
   background-color: rgba(0, 0, 0, 0.096);
+}
+.homebtn{
+  background-color:rgb(174, 255, 174);
+}
+.homebtn:hover{
+    background-color: white;
+}
+.homebtns .homebtn:nth-child(2) {
+  background-color: rgb(206, 206, 206);
+}
+.homebtns .homebtn:nth-child(2):hover {
+  background-color:rgba(174, 255, 174, 0.61);
 }
