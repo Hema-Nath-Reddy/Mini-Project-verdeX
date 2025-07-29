@@ -4,6 +4,7 @@ import time from "../assets/time.svg";
 import tick from "../assets/tick.svg";
 import graph from "../assets/graph.svg";
 
+
 const Home = () => {
   return (
     <div className="hero-container w-full mt-15">

@@ -42,11 +42,12 @@ input::selection{
 }
 .cards{
   border: 0.4vh solid #098409;
-  background-color: transparent;
+  background-color: white;
   transition: 0.7s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
 .cards:hover{
   box-shadow: 0 0 2vh gray;
+  background-color: #a7f7a7bb;
   transform: scale(1.05);
 }
 .cards:hover img{
