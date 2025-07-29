@@ -21,7 +21,7 @@ const Home = () => {
           </p>
           <div className="homebtns">
             <Link
-              to="/register"
+              to="/login"
               className="homebtn font-semibold rounded-4xl px-4 py-2 mr-7.5 text-lg transition-all duration-100"
             >
               Sign Up

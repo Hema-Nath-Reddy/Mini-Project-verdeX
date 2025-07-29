@@ -1,4 +1,10 @@
 @import "tailwindcss";
+::selection{
+  background-color: transparent;
+}
+input::selection{
+  background-color: #a7f7a7bb;
+}
 .hero {
   background-image: url(./assets/hero.jpg);
   background-repeat: no-repeat;
@@ -12,12 +18,12 @@
 }
 
 .logbtn{
-  background-color: rgba(167, 247, 167, 0.733);
+  background-color: #00000018;
   border: 0.2vh solid #098409;
   transition: .3s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
 .logbtn:hover{
-  background-color: rgba(0, 0, 0, 0.096);
+  background-color: #a7f7a7bb;
 }
 .homebtn{
   background-color:rgb(174, 255, 174);
@@ -45,4 +51,22 @@
 }
 .cards:hover img{
   color-scheme: #098409;
+}
+.searchbar{
+  flex-grow: 1;
+  position: relative;
+  margin-top: 4vh;
+}
+.searchbar input{
+  min-width: 90%;
+  margin: 0;
+  transition: 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+.searchbar input:focus{
+  outline: none;
+}
+.search-icon{
+  position: absolute;
+  left: 3vh;
+  top: 2.5vh;
 }

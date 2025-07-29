@@ -1,8 +1,8 @@
-import { useState } from "react";
 import Layout from "./Layout";
 import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
 import MarketPlace from "./pages/MarketPlace";
+import Login from "./pages/Login";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 function App() {
@@ -19,6 +19,10 @@ function App() {
         {
           path: "/marketplace",
           element: <MarketPlace />,
+        },
+        {
+          path: "/login",
+          element: <Login />,
         },
       ],
     },
