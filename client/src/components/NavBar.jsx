@@ -31,7 +31,7 @@ const NavBar = () => {
         </Link>
         <Link
           to="/register"
-          className="logbtn font-semibold border-1 hover:text-[#098409] rounded-4xl px-4 py-2 mr-7.5 text-lg transition-all duration-100"
+          className="logbtn font-semibold hover:text-[#098409] rounded-4xl px-4 py-2 mr-7.5 text-lg transition-all duration-100"
         >
           Login
         </Link>

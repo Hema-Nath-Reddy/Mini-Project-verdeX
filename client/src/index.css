@@ -5,6 +5,7 @@
   background-size: cover;
   background-position: center;
 }
+
 @import url("https://fonts.googleapis.com/css2?family=Archivo+Narrow:ital,wght@0,400..700;1,400..700&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
 *{
   font-family: 'Montserrat';
@@ -12,19 +13,36 @@
 
 .logbtn{
   background-color: rgba(167, 247, 167, 0.733);
+  border: 0.2vh solid #098409;
+  transition: .3s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
 .logbtn:hover{
   background-color: rgba(0, 0, 0, 0.096);
 }
 .homebtn{
   background-color:rgb(174, 255, 174);
+  border: 0.2vh solid #098409;
+  transition: 0.2S cubic-bezier(0.075, 0.82, 0.165, 1);
 }
 .homebtn:hover{
     background-color: white;
+    transform: scale(1.1);
 }
 .homebtns .homebtn:nth-child(2) {
-  background-color: rgb(206, 206, 206);
+  border: none;
 }
 .homebtns .homebtn:nth-child(2):hover {
-  background-color:rgba(174, 255, 174, 0.61);
+  background-color:white;
+}
+.cards{
+  border: 0.4vh solid #098409;
+  background-color: transparent;
+  transition: 0.7s cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+.cards:hover{
+  box-shadow: 0 0 2vh gray;
+  transform: scale(1.05);
+}
+.cards:hover img{
+  color-scheme: #098409;
 }
