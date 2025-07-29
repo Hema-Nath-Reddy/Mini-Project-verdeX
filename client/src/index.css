@@ -5,3 +5,13 @@
   background-size: cover;
   background-position: center;
 }
+@import url("https://fonts.googleapis.com/css2?family=Archivo+Narrow:ital,wght@0,400..700;1,400..700&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
+*{
+  font-family: 'Montserrat';
+}
+.logbtn{
+  background-color: rgba(167, 247, 167, 0.733);
+}
+.logbtn:hover{
+  background-color: rgba(0, 0, 0, 0.096);
+}
