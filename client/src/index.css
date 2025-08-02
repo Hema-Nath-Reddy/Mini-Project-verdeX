@@ -55,7 +55,7 @@ input::selection{
 }
 .cards:hover{
   box-shadow: 0 0 2vh gray;
-  background-color: #a7f7a7bb;
+  background-color: #d0ffd0bb;
   transform: scale(1.05);
 }
 .cards:hover img{
@@ -79,3 +79,10 @@ input::selection{
   left: 3vh;
   top: 2.5vh;
 }
+.left-nav{
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: rgb(198, 218, 194);
+}
+

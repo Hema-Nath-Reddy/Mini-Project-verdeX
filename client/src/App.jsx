@@ -3,8 +3,9 @@ import NotFound from "./pages/NotFound";
 import Home from "./pages/Home";
 import MarketPlace from "./pages/MarketPlace";
 import Login from "./pages/Login";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import AboutUs from "./pages/AboutUs";
+import Account from "./pages/Account";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 function App() {
   const routes = [
@@ -28,6 +29,10 @@ function App() {
         {
           path: "/aboutus",
           element: <AboutUs />,
+        },
+        {
+          path: "/account",
+          element: <Account />,
         },
       ],
     },

@@ -6,7 +6,7 @@ const NavBar = () => {
   const isLoggedIn = true;
   return (
     <div className="w-full flex justify-between items-center h-15 bg-white sticky shadow-lg top-0 z-1000">
-      <div className="left-nav font-bold ml-7.5 text-2xl flex flex-col gap-2">
+      <div className="font-bold ml-7.5 text-2xl flex flex-col gap-2">
         <Link to="/" className="flex items-center gap-2">
           <Leaf color="#098409" />
           <p>
@@ -14,7 +14,7 @@ const NavBar = () => {
           </p>
         </Link>
       </div>
-      <div className="right-nav flex align-center justify-center">
+      <div className="flex align-center justify-center">
         <Link
           to="/"
           className="font-semibold mr-5 text-lg hover:text-[#098409] hover:bg-[#0000001A] rounded-4xl px-4 py-2 transition-all duration-100"
