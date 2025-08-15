@@ -49,6 +49,7 @@ app.post("/api/signup", async (req, res) => {
     console.log(e);
   }
 });
+
 app.post("/api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -68,6 +69,34 @@ app.post("/api/login", async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
+
+/* 
+app.post("/api/logout", async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    if (!sessionId || !sessions[sessionId]) {
+      return res.status(400).json({ error: "Invalid session" });
+    }
+
+    const refreshToken = sessions[sessionId].refresh_token;
+
+    const adminSupabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+
+    const { error } = await adminSupabase.auth.admin.signOut(refreshToken);
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+    delete sessions[sessionId];
+
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Logout error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
+}); */
 app.post("/api/create-project", upload.any(), async (req, res) => {
   try {
     const { name, description, location, seller_id } = req.body;
@@ -293,6 +322,7 @@ app.get("/api/transactions", async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
+
 app.get("/api/transactions/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -309,6 +339,7 @@ app.get("/api/transactions/:id", async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
+
 app.post("/api/support-request", async (req, res) => {
   try {
     const { user_id, subject, message, status } = req.body;
@@ -361,34 +392,6 @@ app.get("/api/support-requests/:id", async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
-
-/* 
-app.post("/api/logout", async (req, res) => {
-  try {
-    const { sessionId } = req.body;
-    if (!sessionId || !sessions[sessionId]) {
-      return res.status(400).json({ error: "Invalid session" });
-    }
-
-    const refreshToken = sessions[sessionId].refresh_token;
-
-    const adminSupabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
-
-    const { error } = await adminSupabase.auth.admin.signOut(refreshToken);
-    if (error) {
-      return res.status(500).json({ error: error.message });
-    }
-    delete sessions[sessionId];
-
-    return res.status(200).json({ message: "Logged out successfully" });
-  } catch (error) {
-    console.error("Logout error:", error.message);
-    return res.status(500).json({ error: error.message });
-  }
-}); */
 
 const port = process.env.PORT || 3001;
 app.listen(port, () => {
