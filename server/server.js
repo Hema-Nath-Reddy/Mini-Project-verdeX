@@ -19,7 +19,6 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
-
 app.post("/api/signup", async (req, res) => {
   try {
     const { email, password, name, phone } = req.body;
@@ -78,13 +77,13 @@ app.post("/api/create-project", upload.any(), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const file = req.files[0]; 
+    const file = req.files[0];
     const ext = path.extname(file.originalname);
 
     const filename = `${Date.now()}${ext}`;
 
     const { error: uploadError } = await supabase.storage
-      .from("Projects") 
+      .from("Projects")
       .upload(filename, file.buffer, {
         contentType: file.mimetype,
       });
@@ -119,6 +118,21 @@ app.post("/api/create-project", upload.any(), async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
+app.get("/api/projects", async (req, res) => {
+  try {
+    const { data, error } = await supabase.from("Projects").select("*");
+    if (error) {
+      throw error;
+    }
+    return res.status(200).json({ projects: data });
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+
 
 /* 
 app.post("/api/logout", async (req, res) => {
