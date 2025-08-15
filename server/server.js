@@ -1,5 +1,4 @@
 const multer = require("multer");
-const crypto = require("crypto");
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
@@ -219,6 +218,94 @@ app.get("/api/carbon-credit/:id", async (req, res) => {
     return res.status(200).json({ carbon_credit: data });
   } catch (error) {
     console.error("Error fetching carbon credit:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/buy-carbon-credit", async (req, res) => {
+  try {
+    const { carbon_credit_id, buyer_id, quantity, seller_id, amount } =
+      req.body;
+
+    const { error } = await supabase
+      .from("carbon_credits")
+      .eq("id", carbon_credit_id)
+      .update({
+        status: "sold",
+      });
+    if (error) {
+      console.error("Error updating carbon credit:", error);
+      return res.status(500).json({ error: error.message });
+    }
+    const { error: buyerError } = await supabase
+      .from("auth.users")
+      .eq("id", buyer_id)
+      .update({
+        balance: balance - amount,
+      });
+    if (buyerError) {
+      console.error("Error updating buyer balance:", buyerError);
+      return res.status(500).json({ error: buyerError.message });
+    }
+
+    const { error: sellerError } = await supabase
+      .from("auth.users")
+      .eq("id", seller_id)
+      .update({
+        balance: balance - amount,
+      });
+    if (sellerError) {
+      console.error("Error updating seller balance:", sellerError);
+      return res.status(500).json({ error: sellerError.message });
+    }
+
+    const { error: transactionError } = await supabase
+      .from("transactions")
+      .insert({
+        buyer_id: buyer_id,
+        seller_id: seller_id,
+        credit_id: carbon_credit_id,
+        quantity: quantity,
+        total_price: amount,
+        transaction_date: new Date(),
+      });
+
+    if (transactionError) {
+      console.error("Error creating transaction:", transactionError);
+      return res.status(500).json({ error: transactionError.message });
+    }
+    return res.status(200).json({ message: "Transaction successful" });
+  } catch (error) {
+    console.error("Error buying carbon credit:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/transactions", async (req, res) => {
+  try {
+    const { data, error } = await supabase.from("transactions").select("*");
+    if (error) {
+      throw error;
+    }
+    return res.status(200).json({ transactions: data });
+  } catch (error) {
+    console.error("Error fetching transactions:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+app.get("/api/transactions/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("id", id);
+    if (error) {
+      throw error;
+    }
+    return res.status(200).json({ transactions: data });
+  } catch (error) {
+    console.error("Error fetching transactions:", error);
     return res.status(500).json({ error: error.message });
   }
 });
