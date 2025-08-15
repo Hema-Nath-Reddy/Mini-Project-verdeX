@@ -309,6 +309,58 @@ app.get("/api/transactions/:id", async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
+app.post("/api/support-request", async (req, res) => {
+  try {
+    const { user_id, subject, message, status } = req.body;
+    const { error } = await supabase.from("support_requests").insert({
+      user_id,
+      subject,
+      message,
+      status,
+      created_at: new Date(),
+    });
+    if (error) {
+      console.error("Error creating support request:", error);
+      return res.status(500).json({ error: error.message });
+    }
+    return res
+      .status(201)
+      .json({ message: "Support request created successfully" });
+  } catch (error) {
+    console.error("Error creating support request:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/support-requests", async (req, res) => {
+  try {
+    const { data, error } = await supabase.from("support_requests").select("*");
+    if (error) {
+      throw error;
+    }
+    return res.status(200).json({ support_requests: data });
+  } catch (error) {
+    console.error("Error fetching support requests:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/support-requests/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabase
+      .from("support_requests")
+      .select("*")
+      .eq("id", id);
+    if (error) {
+      throw error;
+    }
+    return res.status(200).json({ support_request: data });
+  } catch (error) {
+    console.error("Error fetching support request:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
 
 /* 
 app.post("/api/logout", async (req, res) => {
