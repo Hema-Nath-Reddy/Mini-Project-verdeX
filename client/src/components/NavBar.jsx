@@ -1,8 +1,8 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Leaf, CircleUserRound  } from 'lucide-react';
+import { Leaf, CircleUserRound } from "lucide-react";
 const NavBar = () => {
-  const navigate=useNavigate()
+  const navigate = useNavigate();
   const isLoggedIn = true;
   return (
     <div className="w-full flex justify-between items-center h-15 bg-white sticky shadow-lg top-0 z-1000">
@@ -46,7 +46,7 @@ const NavBar = () => {
           <>
             <CircleUserRound
               color="#098409"
-              onClick={()=>navigate('/account')}
+              onClick={() => navigate("/account")}
               className="accbtn mr-7.5 transition-all duration-100 h-10"
             />
           </>
