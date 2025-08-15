@@ -19,24 +19,7 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
-async function uploadProjectPDF(projectKeyPrefix, file) {
-  const rand = crypto.randomBytes(8).toString("hex");
-  const baseName = file.originalname
-    .replace(/\s+/g, "_")
-    .replace(/[^a-zA-Z0-9._-]/g, "");
-  const fileName = baseName.endsWith(".pdf") ? baseName : `${baseName}.pdf`;
-  const objectPath = `${projectKeyPrefix}/${Date.now()}-${rand}-${fileName}`;
-  const { data, error } = await supabase.storage
-    .from("Projects")
-    .upload(objectPath, file.buffer, {
-      contentType: "application/pdf",
-      cacheControl: "3600",
-      upsert: false,
-    });
 
-  if (error) throw error;
-  return data.path;
-}
 app.post("/api/signup", async (req, res) => {
   try {
     const { email, password, name, phone } = req.body;
@@ -95,15 +78,13 @@ app.post("/api/create-project", upload.any(), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const file = req.files[0]; // Take the first uploaded file regardless of field name
+    const file = req.files[0]; 
     const ext = path.extname(file.originalname);
 
-    // Create unique filename
     const filename = `${Date.now()}${ext}`;
 
-    // Upload to Supabase Storage
     const { error: uploadError } = await supabase.storage
-      .from("Projects") // your bucket name
+      .from("Projects") 
       .upload(filename, file.buffer, {
         contentType: file.mimetype,
       });
@@ -111,13 +92,10 @@ app.post("/api/create-project", upload.any(), async (req, res) => {
     if (uploadError) {
       return res.status(500).json({ error: uploadError.message });
     }
-
-    // Get public URL
     const { data: publicUrlData } = supabase.storage
       .from("Projects")
       .getPublicUrl(filename);
 
-    // Save project data to database (if you have a table for it)
     const { error: dbError } = await supabase.from("Projects").insert([
       {
         name,
