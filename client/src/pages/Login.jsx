@@ -12,6 +12,7 @@ const Login = () => {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
@@ -62,6 +63,8 @@ const Login = () => {
           }),
         });
         if (response.ok) {
+          const data = await response.json();
+          setWithExpiry("sessionId", data.sessionId, 7 * 24 * 60 * 60 * 1000);
           toast.success("Login successful");
           setEmail("");
           setPassword("");
