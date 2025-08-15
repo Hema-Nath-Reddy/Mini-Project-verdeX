@@ -132,7 +132,96 @@ app.get("/api/projects", async (req, res) => {
   }
 });
 
+app.get("/api/projects/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabase
+      .from("Projects")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (error) {
+      throw error;
+    }
+    return res.status(200).json({ project: data });
+  } catch (error) {
+    console.error("Error fetching project:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
 
+app.post("/api/create-carbon-credits", async (req, res) => {
+  try {
+    const {
+      project_id,
+      seller_id,
+      amount,
+      price_per_credit,
+      issue_date,
+      expiry_date,
+      status,
+      quantity,
+    } = req.body;
+
+    const { error } = await supabase.from("carbon_credits").insert({
+      project_id,
+      seller_id,
+      amount,
+      price_per_credit,
+      issue_date,
+      expiry_date,
+      status,
+      quantity,
+    });
+
+    if (error) {
+      console.error("Error inserting carbon credits:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res
+      .status(201)
+      .json({ message: "Carbon credits created successfully" });
+  } catch (error) {
+    console.error("Error creating carbon credits:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/carbon-credits", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("carbon_credits")
+      .select("*")
+      .eq("status", "active");
+    if (error) {
+      throw error;
+    }
+    return res.status(200).json({ carbon_credits: data });
+  } catch (error) {
+    console.error("Error fetching carbon credits:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/carbon-credit/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabase
+      .from("carbon_credits")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+    return res.status(200).json({ carbon_credit: data });
+  } catch (error) {
+    console.error("Error fetching carbon credit:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
 
 /* 
 app.post("/api/logout", async (req, res) => {
