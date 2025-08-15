@@ -63,8 +63,6 @@ const Login = () => {
           }),
         });
         if (response.ok) {
-          const data = await response.json();
-          setWithExpiry("sessionId", data.sessionId, 7 * 24 * 60 * 60 * 1000);
           toast.success("Login successful");
           setEmail("");
           setPassword("");
