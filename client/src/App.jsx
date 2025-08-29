@@ -5,6 +5,7 @@ import MarketPlace from "./pages/MarketPlace";
 import Login from "./pages/Login";
 import AboutUs from "./pages/AboutUs";
 import Account from "./pages/Account";
+import Admin from "./pages/Admin";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 function App() {
@@ -33,6 +34,10 @@ function App() {
         {
           path: "/account",
           element: <Account />,
+        },
+        {
+          path: "/admin",
+          element: <Admin />,
         },
       ],
     },

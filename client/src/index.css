@@ -36,22 +36,15 @@ input::selection{
 }
 .homebtn{
   background-color:#aeffae;
-  border: 0.2vh solid #098409;
   transition: 0.2S cubic-bezier(0.075, 0.82, 0.165, 1);
 }
 .homebtn:hover{
     background-color: white;
     transform: scale(1.1);
 }
-.homebtns .homebtn:nth-child(2) {
-  border: none;
-}
-.homebtns .homebtn:nth-child(2):hover {
-  background-color:white;
-}
 .cards{
-  border: 0.4vh solid #098409;
-  background-color: white;
+  border: 0.15rem solid #098409;
+  background-color: transparent;
   transition: 0.7s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
 .cards:hover{
@@ -70,15 +63,19 @@ input::selection{
 .searchbar input{
   min-width: 90%;
   margin: 0;
+    border: 0.1rem solid #000000;
+
   transition: 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
 .searchbar input:focus{
   outline: none;
+    border: 0.1rem solid #098409;
+
 }
 .search-icon{
   position: absolute;
-  left: 3vh;
-  top: 2.5vh;
+  left: 1.2rem;
+  top: 1rem;
 }
 .left-nav{
   position: fixed;
@@ -86,4 +83,6 @@ input::selection{
   left: 0;
   background-color: rgb(198, 218, 194);
 }
+.left-nav a{
+color:#ff5858}
 

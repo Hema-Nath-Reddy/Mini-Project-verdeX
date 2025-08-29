@@ -4,7 +4,6 @@ import time from "../assets/time.svg";
 import tick from "../assets/tick.svg";
 import graph from "../assets/graph.svg";
 
-
 const Home = () => {
   return (
     <div className="hero-container w-full mt-15">
@@ -37,14 +36,14 @@ const Home = () => {
         </div>
       </div>
       <div className="w-full m-auto flex flex-col justify-center items-center pb-50">
-        <div className="text-left flex w-250 text-xl font-semibold mt-7.5">
-          Why Choose{" "}
+        <div className="text-left flex w-250 text-xl font-bold mt-10">
+          Why Choose
           <p>
             &nbsp;Verde<span className="text-[#098409]">X</span>
           </p>
           ?
         </div>
-        <p className="w-250 text-left text-3xl font-extrabold mt-10">
+        <p className="w-250 text-left text-3xl font-extrabold mt-5">
           Verde<span className="text-[#098409]">X</span> offers a seamless and
           reliable
           <br />
@@ -88,6 +87,26 @@ const Home = () => {
             </p>
           </div>
         </div>
+        <div className="text-left flex w-250 text-xl font-bold mt-20">
+          About
+          <p>
+            &nbsp;Verde<span className="text-[#098409]">X</span>
+          </p>
+        </div>
+        <p className="w-250 text-left text-lg font-semibold mt-8">Our Vision</p>
+        <p className="w-250 text-left text-s font-medium mt-1">
+          To be the foremost catalyst for environmental sustainability in India, driving significant reductions in carbon emissions through a dynamic and accessible carbon credit marketplace.
+          <br />
+          and efficient trading experience.
+        </p>
+        <p className="w-250 text-left text-lg font-semibold mt-5">Our Mission</p>
+        <p className="w-250 text-left text-s font-medium mt-1">
+          To provide a secure, transparent, and efficient platform that connects businesses committed to reducing their carbon footprint, facilitating the exchange of carbon credits to support environmental initiatives and promote corporate responsibility.
+        </p>
+        <p className="w-250 text-left text-lg font-semibold mt-5">Alignment with Sustainable Development Goals (SDGs)</p>
+        <p className="w-250 text-left text-s font-medium mt-1">
+          Verdex actively contributes to several United Nations Sustainable Development Goals, including Climate Action (SDG 13), Responsible Consumption and Production (SDG 12), and Partnerships for the Goals (SDG 17). By fostering a robust carbon credit market, we empower businesses to invest in sustainable practices and contribute to a greener future for India.
+        </p>
       </div>
     </div>
   );

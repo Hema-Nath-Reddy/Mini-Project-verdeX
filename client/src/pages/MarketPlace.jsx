@@ -19,7 +19,7 @@ const MarketPlace = () => {
           </p>
           <form className="searchbar">
             <input
-              className="w-250 text-s font-medium bg-gray-200 p-4 pl-14 rounded-xl"
+              className="w-250 text-s font-medium bg-gray-100 p-4 pl-14 rounded-xl"
               type="text"
               placeholder="Search for companies or credits"
             />
@@ -28,7 +28,7 @@ const MarketPlace = () => {
           <div className="filters w-250 mt-7.5 flex gap-5 relative">
             <div
               onClick={() => setPriceToggle(!priceToggle)}
-              className="h-9 cursor-pointer flex p-1.5 pl-4 bg-gray-200 rounded-4xl relative"
+              className="h-9 cursor-pointer flex p-1.5 pl-4 bg-gray-100 rounded-4xl border border-gray-500 relative"
             >
               <p className="text-s font-medium">Price (₹)</p>
               {priceToggle ? <ChevronDown /> : <ChevronUp />}
@@ -45,7 +45,7 @@ const MarketPlace = () => {
             </div>
             <div
               onClick={() => setCompanyToggle(!companyToggle)}
-              className="h-9 cursor-pointer flex p-1.5 pl-4 bg-gray-200 rounded-4xl relative"
+              className="h-9 cursor-pointer flex p-1.5 pl-4 bg-gray-100 rounded-4xl border border-gray-500 relative"
             >
               <p className="text-s font-medium">Company</p>
               {companyToggle ? <ChevronDown /> : <ChevronUp />}
