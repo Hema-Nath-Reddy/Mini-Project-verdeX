@@ -81,8 +81,9 @@ input::selection{
   position: fixed;
   top: 0;
   left: 0;
-  background-color: rgb(198, 218, 194);
+  background-color: #c6dac2;
 }
+
 .left-nav a{
 color:#ff5858}
 
