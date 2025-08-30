@@ -1,9 +1,9 @@
 @import "tailwindcss";
 @import url("https://fonts.googleapis.com/css2?family=Archivo+Narrow:ital,wght@0,400..700;1,400..700&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
-::selection{
+::selection {
   background-color: transparent;
 }
-input::selection{
+input::selection {
   background-color: #a7f7a7bb;
 }
 .hero {
@@ -13,77 +13,75 @@ input::selection{
   background-position: center;
 }
 
-
-*{
-  font-family: 'Montserrat';
+* {
+  font-family: "Montserrat";
 }
 
-.logbtn{
+.logbtn {
   background-color: #00000018;
   border: 0.2vh solid #098409;
-  transition: .3s cubic-bezier(0.075, 0.82, 0.165, 1);
+  transition: 0.3s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
-.logbtn:hover{
+.logbtn:hover {
   background-color: #a7f7a7bb;
 }
-.accbtn{
+.accbtn {
   cursor: pointer;
   scale: 1.2;
-  transition: .3s cubic-bezier(0.075, 0.82, 0.165, 1);
+  transition: 0.3s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
-.accbtn:hover{
+.accbtn:hover {
   opacity: 0.7;
 }
-.homebtn{
-  background-color:#aeffae;
-  transition: 0.2S cubic-bezier(0.075, 0.82, 0.165, 1);
+.homebtn {
+  background-color: #aeffae;
+  transition: 0.2s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
-.homebtn:hover{
-    background-color: white;
-    transform: scale(1.1);
+.homebtn:hover {
+  background-color: white;
+  transform: scale(1.1);
 }
-.cards{
+.cards {
   border: 0.15rem solid #098409;
   background-color: transparent;
   transition: 0.7s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
-.cards:hover{
+.cards:hover {
   box-shadow: 0 0 2vh gray;
   background-color: #d0ffd0bb;
   transform: scale(1.05);
 }
-.cards:hover img{
+.cards:hover img {
   color-scheme: #098409;
 }
-.searchbar{
+.searchbar {
   flex-grow: 1;
   position: relative;
   margin-top: 4vh;
 }
-.searchbar input{
+.searchbar input {
   min-width: 90%;
   margin: 0;
-    border: 0.1rem solid #000000;
+  border: 0.1rem solid #000000;
 
   transition: 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
 }
-.searchbar input:focus{
+.searchbar input:focus {
   outline: none;
-    border: 0.1rem solid #098409;
-
+  border: 0.1rem solid #098409;
 }
-.search-icon{
+.search-icon {
   position: absolute;
   left: 1.2rem;
   top: 1rem;
 }
-.left-nav{
+.left-nav {
   position: fixed;
   top: 0;
   left: 0;
   background-color: #c6dac2;
 }
 
-.left-nav a{
-color:#ff5858}
-
+.left-nav a {
+  color: #ff5858;
+}

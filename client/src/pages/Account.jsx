@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Settings, History, Info, CirclePlus } from "lucide-react";
-import AccountSettings from "../components/AccountSettings"; 
-import TransactionHistory from "../components/TransactionHistory"; 
+import AccountSettings from "../components/AccountSettings";
+import TransactionHistory from "../components/TransactionHistory";
 import AddCredits from "../components/AddCredits";
 import Overview from "../components/Overview";
 
@@ -11,7 +11,7 @@ const Account = () => {
   const renderContent = () => {
     switch (view) {
       case "overview":
-        return <Overview />;
+        return <Overview onViewChange={setView} />;
       case "settings":
         return <AccountSettings />;
       case "history":
@@ -24,15 +24,15 @@ const Account = () => {
   };
 
   return (
-    <div className="flex flex-row h-screen w-full mt-10">
-     <div className="left-nav h-full w-70 flex flex-col gap-2 mt-15 text-left px-5 py-10">
+    <div className="flex flex-row h-full w-full mt-10">
+      <div className="left-nav h-full w-70 flex flex-col gap-2 mt-15 text-left px-5 py-10">
         <button
           onClick={() => setView("overview")}
           className={`left-nav-links text-left text-l font-medium cursor-pointer p-3 rounded-4xl flex ${view === "overview" ? "bg-white" : ""}`}
         >
           <Info /> &nbsp;&nbsp; Overview
         </button>
-        
+
         <button
           onClick={() => setView("history")}
           className={`left-nav-links text-left text-l font-medium cursor-pointer p-3 rounded-4xl flex ${view === "history" ? "bg-white" : ""}`}

@@ -95,17 +95,31 @@ const Home = () => {
         </div>
         <p className="w-250 text-left text-lg font-semibold mt-8">Our Vision</p>
         <p className="w-250 text-left text-s font-medium mt-1">
-          To be the foremost catalyst for environmental sustainability in India, driving significant reductions in carbon emissions through a dynamic and accessible carbon credit marketplace.
+          To be the foremost catalyst for environmental sustainability in India,
+          driving significant reductions in carbon emissions through a dynamic
+          and accessible carbon credit marketplace.
           <br />
           and efficient trading experience.
         </p>
-        <p className="w-250 text-left text-lg font-semibold mt-5">Our Mission</p>
-        <p className="w-250 text-left text-s font-medium mt-1">
-          To provide a secure, transparent, and efficient platform that connects businesses committed to reducing their carbon footprint, facilitating the exchange of carbon credits to support environmental initiatives and promote corporate responsibility.
+        <p className="w-250 text-left text-lg font-semibold mt-5">
+          Our Mission
         </p>
-        <p className="w-250 text-left text-lg font-semibold mt-5">Alignment with Sustainable Development Goals (SDGs)</p>
         <p className="w-250 text-left text-s font-medium mt-1">
-          Verdex actively contributes to several United Nations Sustainable Development Goals, including Climate Action (SDG 13), Responsible Consumption and Production (SDG 12), and Partnerships for the Goals (SDG 17). By fostering a robust carbon credit market, we empower businesses to invest in sustainable practices and contribute to a greener future for India.
+          To provide a secure, transparent, and efficient platform that connects
+          businesses committed to reducing their carbon footprint, facilitating
+          the exchange of carbon credits to support environmental initiatives
+          and promote corporate responsibility.
+        </p>
+        <p className="w-250 text-left text-lg font-semibold mt-5">
+          Alignment with Sustainable Development Goals (SDGs)
+        </p>
+        <p className="w-250 text-left text-s font-medium mt-1">
+          Verdex actively contributes to several United Nations Sustainable
+          Development Goals, including Climate Action (SDG 13), Responsible
+          Consumption and Production (SDG 12), and Partnerships for the Goals
+          (SDG 17). By fostering a robust carbon credit market, we empower
+          businesses to invest in sustainable practices and contribute to a
+          greener future for India.
         </p>
       </div>
     </div>

@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Leaf, CircleUserRound, UserRoundCog, LogOut, ShieldUser } from "lucide-react";
+import {
+  Leaf,
+  CircleUserRound,
+  UserRoundCog,
+  LogOut,
+  ShieldUser,
+} from "lucide-react";
 const NavBar = () => {
   const isLoggedIn = true;
   const isAdmin = true;
@@ -52,23 +58,31 @@ const NavBar = () => {
               className="accbtn mr-7.5 transition-all duration-100 h-10"
             />
             {menuOpen && (
-                <div className="absolute right-2 top-17 w-50 flex flex-col bg-white border border-gray-300 rounded-xl shadow-lg z-50">
-                  <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex gap-2 font-semibold"
-                  onClick={() => setMenuOpen(!menuOpen) & navigate("/account")}>
-                    <UserRoundCog color="#098409"/> Profile
-                  </div>
-                  <hr className="border-gray-300" />
-                  <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex gap-2 font-semibold" onClick={() => setMenuOpen(!menuOpen)}>
-                    <LogOut color="#ff5858"/> Logout
-                  </div>
-                  {isAdmin && <hr className="border-gray-300" />}
-                  {isAdmin && (
-                    <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex gap-2 font-semibold text-[#143153ff]"  onClick={() => setMenuOpen(!menuOpen) & navigate("/admin")}>
-                      <ShieldUser color="#143153ff"/> Admin Controls
-                    </div>
-                  )}
+              <div className="absolute right-2 top-17 w-50 flex flex-col bg-white border border-gray-300 rounded-xl shadow-lg z-50">
+                <div
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex gap-2 font-semibold"
+                  onClick={() => setMenuOpen(!menuOpen) & navigate("/account")}
+                >
+                  <UserRoundCog color="#098409" /> Profile
                 </div>
-              )}
+                <hr className="border-gray-300" />
+                <div
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex gap-2 font-semibold"
+                  onClick={() => setMenuOpen(!menuOpen)}
+                >
+                  <LogOut color="#ff5858" /> Logout
+                </div>
+                {isAdmin && <hr className="border-gray-300" />}
+                {isAdmin && (
+                  <div
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex gap-2 font-semibold text-[#143153ff]"
+                    onClick={() => setMenuOpen(!menuOpen) & navigate("/admin")}
+                  >
+                    <ShieldUser color="#143153ff" /> Admin Controls
+                  </div>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>

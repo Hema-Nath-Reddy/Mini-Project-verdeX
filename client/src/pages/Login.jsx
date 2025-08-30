@@ -12,7 +12,6 @@ const Login = () => {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
@@ -34,7 +33,7 @@ const Login = () => {
         });
         if (response.ok) {
           toast.success(
-            "An email has been sent to you. Please verify your email address."
+            "An email has been sent to you. Please verify your email address.",
           );
           setEmail("");
           setPassword("");

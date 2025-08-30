@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
 const MarketPlace = (props) => {
   const [priceToggle, setPriceToggle] = useState(true);
   const [companyToggle, setCompanyToggle] = useState(true);
-  
+
   const [activeSort, setActiveSort] = useState(null);
 
   const { data } = props;
@@ -51,22 +51,22 @@ const MarketPlace = (props) => {
     const sortedData = [...displayData].sort((a, b) => {
       const priceA = parseFloat(a.pricePerCredit.replace(/[^0-9.-]+/g, ""));
       const priceB = parseFloat(b.pricePerCredit.replace(/[^0-9.-]+/g, ""));
-      return direction === 'asc' ? priceA - priceB : priceB - priceA;
+      return direction === "asc" ? priceA - priceB : priceB - priceA;
     });
     setDisplayData(sortedData);
     setPriceToggle(true);
-    setActiveSort(direction === 'asc' ? 'price_asc' : 'price_desc');
+    setActiveSort(direction === "asc" ? "price_asc" : "price_desc");
   };
 
   const handleSortByCompany = (direction) => {
     const sortedData = [...displayData].sort((a, b) => {
-      return direction === 'asc' 
+      return direction === "asc"
         ? a.company.localeCompare(b.company)
         : b.company.localeCompare(a.company);
     });
     setDisplayData(sortedData);
     setCompanyToggle(true);
-    setActiveSort(direction === 'asc' ? 'company_asc' : 'company_desc');
+    setActiveSort(direction === "asc" ? "company_asc" : "company_desc");
   };
 
   const clearSort = () => {
@@ -75,17 +75,17 @@ const MarketPlace = (props) => {
   };
 
   const sortOptionsText = {
-    price_asc: 'Price: Low - High',
-    price_desc: 'Price: High - Low',
-    company_asc: 'Company: A-Z',
-    company_desc: 'Company: Z-A',
+    price_asc: "Price: Low - High",
+    price_desc: "Price: High - Low",
+    company_asc: "Company: A-Z",
+    company_desc: "Company: Z-A",
   };
 
   return (
     <div className="hero-container w-full mt-15">
       <div className="w-250 m-auto flex flex-col justify-center items-center">
         <div className="w-full m-auto flex flex-col justify-center items-center pb-50">
-           <p className="w-250 text-left text-3xl font-extrabold mt-10">
+          <p className="w-250 text-left text-3xl font-extrabold mt-10">
             Market<span className="text-[#098409]">place</span>
           </p>
           <p className="w-250 text-left text-s font-medium mt-3">
@@ -100,7 +100,7 @@ const MarketPlace = (props) => {
             <Search className="search-icon" color="gray" />
           </form>
 
-          <div className="filters w-250 mt-4 flex gap-5 items-center">
+          <div className="w-250 mt-4 flex gap-5 items-center">
             <div
               onClick={() => setPriceToggle(!priceToggle)}
               className="h-9 cursor-pointer flex p-1.5 pl-4 bg-gray-100 rounded-4xl border border-gray-500 relative"
@@ -109,10 +109,16 @@ const MarketPlace = (props) => {
               {priceToggle ? <ChevronDown /> : <ChevronUp />}
               {!priceToggle && (
                 <div className="absolute left-0 top-full mt-1 w-36 flex flex-col bg-white border border-gray-300 rounded-xl shadow-lg z-50">
-                  <div onClick={() => handleSortByPrice('asc')} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                  <div
+                    onClick={() => handleSortByPrice("asc")}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
                     Low - High
                   </div>
-                  <div onClick={() => handleSortByPrice('desc')} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                  <div
+                    onClick={() => handleSortByPrice("desc")}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
                     High - Low
                   </div>
                 </div>
@@ -126,32 +132,35 @@ const MarketPlace = (props) => {
               {companyToggle ? <ChevronDown /> : <ChevronUp />}
               {!companyToggle && (
                 <div className="absolute left-0 top-full mt-1 w-36 flex flex-col bg-white border border-gray-300 rounded-xl shadow-lg z-50">
-                  <div onClick={() => handleSortByCompany('asc')} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                  <div
+                    onClick={() => handleSortByCompany("asc")}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
                     A-Z
                   </div>
-                  <div onClick={() => handleSortByCompany('desc')} className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                  <div
+                    onClick={() => handleSortByCompany("desc")}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
                     Z-A
                   </div>
                 </div>
               )}
             </div>
           </div>
-            {activeSort && (
-          <div className="w-250 mt-4 h-8"> 
-              <div
-                className="inline-flex items-center gap-2 bg-[#d0e7cb] text-[#098409] text-sm font-medium px-3 py-1.5 rounded-full"
-              >
+          {activeSort && (
+            <div className="w-250 mt-4 h-8">
+              <div className="inline-flex items-center gap-2 bg-[#d0e7cb] text-[#098409] text-sm font-medium px-3 py-1.5 rounded-full">
                 <span>{sortOptionsText[activeSort]}</span>
                 <X
                   className="h-4 w-4 cursor-pointer hover:text-red-600 transition-colors"
                   onClick={clearSort}
                 />
               </div>
-          </div>
-            )}
-          
-          
-           <div className="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mt-4">
+            </div>
+          )}
+
+          <div className="w-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mt-4">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -212,7 +221,6 @@ const MarketPlace = (props) => {
               </table>
             </div>
           </div>
-
         </div>
       </div>
     </div>
@@ -226,7 +234,7 @@ MarketPlace.propTypes = {
       creditsAvailable: PropTypes.string.isRequired,
       pricePerCredit: PropTypes.string.isRequired,
       trendValue: PropTypes.number.isRequired,
-    })
+    }),
   ),
 };
 export default MarketPlace;
