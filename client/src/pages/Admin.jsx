@@ -21,7 +21,7 @@ const Admin = () => {
   };
 
   return (
-    <div className="flex flex-row h-screen w-full mt-10">
+    <div className="flex flex-row h-full w-full mt-10">
       <div className="left-nav h-full w-70 flex flex-col gap-2 mt-15 text-left px-5 py-10">
         <button
           onClick={() => setView("dashboard")}

@@ -45,11 +45,11 @@ const TransactionHistory = () => {
   ];
 
   return (
-    <div className="ml-80 flex flex-col">
+    <div className="ml-80 flex flex-col w-250">
       <p className="text-left text-3xl font-extrabold">
         Transaction<span className="text-[#098409]">&nbsp;History</span>
       </p>
-      <div className="mt-5 bg-white w-245 rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="mt-5 bg-white w-full rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

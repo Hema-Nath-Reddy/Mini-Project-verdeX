@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Settings, History, Info, CirclePlus } from "lucide-react";
 import AccountSettings from "../components/AccountSettings";
 import TransactionHistory from "../components/TransactionHistory";
-import AddCredits from "../components/AddCredits";
+import ListCredits from "../components/ListCredits";
 import Overview from "../components/Overview";
 
 const Account = () => {
@@ -17,7 +17,7 @@ const Account = () => {
       case "history":
         return <TransactionHistory />;
       case "credits":
-        return <AddCredits />;
+        return <ListCredits />;
       default:
         return null;
     }
@@ -43,7 +43,7 @@ const Account = () => {
           onClick={() => setView("credits")}
           className={`left-nav-links text-left text-l font-medium cursor-pointer p-3 rounded-4xl flex ${view === "credits" ? "bg-white" : ""}`}
         >
-          <CirclePlus /> &nbsp;&nbsp; Add Credits
+          <CirclePlus /> &nbsp;&nbsp; List Credits
         </button>
         <button
           onClick={() => setView("settings")}

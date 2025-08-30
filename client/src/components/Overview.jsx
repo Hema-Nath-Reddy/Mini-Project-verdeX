@@ -43,11 +43,11 @@ const Overview = (props) => {
   };
 
   return (
-    <div className="ml-80 flex flex-col mb-20">
+    <div className="w-250 ml-80 flex flex-col mb-20">
       <p className="text-left text-3xl font-extrabold">
         Over<span className="text-[#098409]">view</span>
       </p>
-      <div className="w-245 mt-4 flex gap-5 items-center justify-between">
+      <div className="w-full mt-4 flex items-center justify-between">
         <div className="flex flex-row gap-2 justify-center items-center">
           <UserCircle className="h-20 w-20" />
           <div>
@@ -65,16 +65,16 @@ const Overview = (props) => {
         </div>
       </div>
       <hr className="border-gray-200 mt-5 mb-5" />
-      <div className="card-container flex flex-row justify-between w-245 gap-4">
-        <div className="card w-90 px-4 py-6 border border-gray-200 rounded-xl">
+      <div className="card-container flex flex-row justify-between w-full gap-4">
+        <div className="card bg-white w-90 px-4 py-6 border border-gray-200 rounded-xl">
           <p className="">Balance</p>
           <h3 className="text-3xl font-bold text-[#098409]">$85</h3>
         </div>
-        <div className="card w-90 p-4 py-6 border border-gray-200 rounded-xl">
+        <div className="card bg-white w-90 p-4 py-6 border border-gray-200 rounded-xl">
           <p className="">Credits Traded</p>
           <h3 className="text-3xl font-bold text-[#098409]">246</h3>
         </div>
-        <div className="card w-90 p-4 py-6 border border-gray-200 rounded-xl">
+        <div className="card bg-white w-90 p-4 py-6 border border-gray-200 rounded-xl">
           <p className="">Impact Score</p>
           <h3 className="text-3xl font-bold text-[#098409]">70</h3>
         </div>
