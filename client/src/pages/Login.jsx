@@ -1,4 +1,4 @@
-import React, { use, useState, useRef } from "react";
+import React, { useState } from "react";
 import { EyeClosed, Eye } from "lucide-react";
 import toast from "react-hot-toast";
 import { Toaster } from "react-hot-toast";
@@ -20,7 +20,6 @@ const Login = () => {
       try {
         const response = await fetch("http://localhost:3001/api/signup", {
           method: "POST",
-
           headers: {
             "Content-Type": "application/json",
           },
@@ -54,7 +53,7 @@ const Login = () => {
         const response = await fetch("http://localhost:3001/api/login", {
           method: "POST",
           headers: {
-            "Content-type": "application/json  ",
+            "Content-type": "application/json",
           },
           body: JSON.stringify({
             email,
@@ -92,68 +91,112 @@ const Login = () => {
           )}
         </p>
 
-        {isSignup && (
-          <>
-            <input
-              type="text"
-              placeholder="Full Name"
-              className="w-100 h-10 mt-4 border border-[#098409] rounded-lg p-2"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="name"
-            />
-            <input
-              type="number"
-              placeholder="Phone Number"
-              className="w-100 h-10 mt-4 border border-[#098409] rounded-lg p-2"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              autoComplete="tel"
-            />
-          </>
-        )}
-
-        <input
-          type="email"
-          placeholder="Email Address"
-          className="w-100 h-10 mt-4 border border-[#098409] rounded-lg p-2"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoComplete="email"
-        />
-        <div className="relative w-100 mt-4">
-          <input
-            type={isPasswordVisible ? "text" : "password"}
-            placeholder="Password"
-            className="w-full h-10 border border-[#098409] rounded-lg p-2 pr-10"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-          />
-          {!isPasswordVisible ? (
-            <EyeClosed
-              onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-              className="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-600"
-            />
-          ) : (
-            <Eye
-              onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-              className="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-600"
-            />
-          )}
-        </div>
-
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className={
-            loading
-              ? "w-100 h-10 mt-4 bg-[#00000025] border border-[#098409] text-black rounded-lg cursor-not-allowed"
-              : "w-100 h-10 mt-4 bg-[#00000025] border border-[#098409] text-black hover:bg-[#a7f7a7bb] rounded-lg hover:text-[#098409] font-bold cursor-pointer transition-all duration-300"
-          }
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col items-center w-100"
         >
-          {loading ? "Loading..." : isSignup ? "SIGN UP" : "LOGIN"}
-        </button>
+          {isSignup && (
+            <>
+              <div className="relative w-full mt-4">
+                <input
+                  type="text"
+                  id="name"
+                  className="peer w-full h-10 border border-[#098409] rounded-lg p-2 placeholder-transparent focus:outline-none focus:border-[#076a07]"
+                  placeholder="Full Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  autoComplete="name"
+                  required
+                />
+                <label
+                  htmlFor="name"
+                  className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+                >
+                  Full Name
+                </label>
+              </div>
+              <div className="relative w-full mt-4">
+                <input
+                  type="number"
+                  id="phone"
+                  className="peer w-full h-10 border border-[#098409] rounded-lg p-2 placeholder-transparent focus:outline-none focus:border-[#076a07]"
+                  placeholder="Phone Number"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  autoComplete="tel"
+                  required
+                />
+                <label
+                  htmlFor="phone"
+                  className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+                >
+                  Phone Number
+                </label>
+              </div>
+            </>
+          )}
+
+          <div className="relative w-full mt-4">
+            <input
+              type="email"
+              id="email"
+              className="peer w-full h-10 border border-[#098409] rounded-lg p-2 placeholder-transparent focus:outline-none focus:border-[#076a07]"
+              placeholder="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              required
+            />
+            <label
+              htmlFor="email"
+              className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            >
+              Email Address
+            </label>
+          </div>
+          <div className="relative w-full mt-4">
+            <input
+              type={isPasswordVisible ? "text" : "password"}
+              id="password"
+              className="peer w-full h-10 border border-[#098409] rounded-lg p-2 pr-10 placeholder-transparent focus:outline-none focus:border-[#076a07]"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+            <label
+              htmlFor="password"
+              className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            >
+              Password
+            </label>
+            {!isPasswordVisible ? (
+              <EyeClosed
+                onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                className="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-600"
+              />
+            ) : (
+              <Eye
+                onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                className="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-600"
+              />
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className={
+              loading
+                ? "w-full h-10 mt-4 bg-[#00000025] border border-[#098409] text-black rounded-lg cursor-not-allowed"
+                : "w-full h-10 mt-4 bg-[#00000025] border border-[#098409] text-black hover:bg-[#a7f7a7bb] rounded-lg hover:text-[#098409] font-bold cursor-pointer transition-all duration-300"
+            }
+          >
+            {loading ? "Loading..." : isSignup ? "SIGN UP" : "LOGIN"}
+          </button>
+        </form>
+
         <Toaster position="bottom-right" />
         <p className="mt-4">
           {isSignup ? (

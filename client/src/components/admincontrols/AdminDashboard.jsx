@@ -59,29 +59,42 @@ const AdminDashboard = () => {
         Recent <span className="text-[#098409]">Activity</span>
       </h2>
       <div className="mb-20 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="text-left py-4 px-6 text-gray-600 font-medium text-sm">Activity</th>
-              <th className="text-left py-4 px-6 text-gray-600 font-medium text-sm">Type</th>
-              <th className="text-left py-4 px-6 text-gray-600 font-medium text-sm">User</th>
-              <th className="text-left py-4 px-6 text-gray-600 font-medium text-sm">Timestamp</th>
-            </tr>
-          </thead>
-          <tbody>
-            {activityData.map((row, index) => (
-              <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="py-5 px-6 text-gray-900 font-medium">{row.activity}</td>
-                <td className="py-5 px-6 text-green-700">{row.type}</td>
-                <td className="py-5 px-6 text-green-700">{row.user}</td>
-                <td className="py-5 px-6 text-gray-700">{row.timestamp}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="text-left py-4 px-6 text-gray-600 font-medium text-sm">
+                  Activity
+                </th>
+                <th className="text-left py-4 px-6 text-gray-600 font-medium text-sm">
+                  Type
+                </th>
+                <th className="text-left py-4 px-6 text-gray-600 font-medium text-sm">
+                  User
+                </th>
+                <th className="text-left py-4 px-6 text-gray-600 font-medium text-sm">
+                  Timestamp
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {activityData.map((row, index) => (
+                <tr
+                  key={index}
+                  className="border-b border-gray-100 hover:bg-gray-50"
+                >
+                  <td className="py-5 px-6 text-gray-900 font-medium">
+                    {row.activity}
+                  </td>
+                  <td className="py-5 px-6 text-green-700">{row.type}</td>
+                  <td className="py-5 px-6 text-green-700">{row.user}</td>
+                  <td className="py-5 px-6 text-gray-700">{row.timestamp}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
     </div>
   );
 };
