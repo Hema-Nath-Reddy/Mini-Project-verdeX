@@ -17,6 +17,11 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 );
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 app.post("/api/signup", async (req, res) => {
   try {
     const { email, password, name, phone } = req.body;
@@ -227,7 +232,7 @@ app.get("/api/projects/:id", async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 }); */
-app.post("/api/create-carbon-credits", upload.any(), async (req, res) => {
+app.post("/api/create-carbon-credit", upload.any(), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: "No file uploaded" });
@@ -260,7 +265,6 @@ app.post("/api/create-carbon-credits", upload.any(), async (req, res) => {
       price_per_credit,
       issue_date,
       expiry_date,
-      status,
       quantity,
       type,
       trendValue,
@@ -275,7 +279,6 @@ app.post("/api/create-carbon-credits", upload.any(), async (req, res) => {
       price_per_credit,
       issue_date,
       expiry_date,
-      status,
       quantity,
       verification_document_url: verification_document_url,
       type,
@@ -509,6 +512,206 @@ app.get("/api/support-requests/:id", async (req, res) => {
   } catch (error) {
     console.error("Error fetching support request:", error);
     return res.status(500).json({ error: error.message });
+  }
+});
+app.get("/api/dashboard-activity", async (req, res) => {
+  try {
+    // ---- Fetch recent activities for display ----
+    // Fetch recent sign-ups from the profiles table
+    const { data: userActivities, error: userError } = await supabase
+      .from("profiles")
+      .select("name, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (userError) throw userError;
+
+    const formattedUsers = userActivities.map((user) => ({
+      activityType: "User Account Created",
+      description: "User Registration",
+      user: user.name,
+      timestamp: user.created_at,
+    }));
+
+    // Fetch recent transactions
+    const { data: transactionActivities, error: transactionError } =
+      await supabase
+        .from("transactions")
+        .select("buyer_id, credit_id, transaction_date")
+        .order("transaction_date", { ascending: false })
+        .limit(5);
+
+    if (transactionError) throw transactionError;
+
+    const formattedTransactions = transactionActivities.map((transaction) => ({
+      activityType: "Credit Purchase",
+      description: "Transaction",
+      user: transaction.buyer_id, // You may need to join with profiles to get the name
+      timestamp: transaction.transaction_date,
+    }));
+
+    // Fetch recent project/credit submissions
+    const { data: projectActivities, error: projectError } = await supabase
+      .from("carbon_credits")
+      .select("name, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (projectError) throw projectError;
+
+    const formattedProjects = projectActivities.map((project) => ({
+      activityType: "Carbon Offset Project Submitted",
+      description: "New Project",
+      user: "N/A", // You may need to fetch the seller's name
+      timestamp: project.created_at,
+    }));
+
+    // Combine all activities, sort by timestamp, and send to the client
+    const allActivities = [
+      ...formattedUsers,
+      ...formattedTransactions,
+      ...formattedProjects,
+    ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    // ---- Fetch dashboard metrics ----
+
+    // Fetch total credits traded (sum of all transaction quantities)
+    const { data: creditsData, error: creditsError } = await supabase
+      .from("transactions")
+      .select("quantity");
+
+    if (creditsError) {
+      console.error("Error fetching total credits:", creditsError);
+      return res.status(500).json({ error: creditsError.message });
+    }
+
+    const totalCreditsTraded = creditsData.reduce(
+      (sum, item) => sum + item.quantity,
+      0
+    );
+
+    // Fetch new users this month
+    const today = new Date();
+    const firstDayOfMonth = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      1
+    ).toISOString();
+
+    const { count: newUsersCount, error: usersError } = await supabase
+      .from("profiles")
+      .select("id", { count: "exact" })
+      .gte("created_at", firstDayOfMonth); // Count users created since the start of the month
+
+    if (usersError) {
+      console.error("Error fetching new users:", usersError);
+      return res.status(500).json({ error: usersError.message });
+    }
+
+    // Fetch pending approvals for carbon credits
+    const { count: pendingApprovalsCount, error: pendingApprovalsError } =
+      await supabase
+        .from("carbon_credits")
+        .select("id", { count: "exact" })
+        .eq("status", "pending");
+
+    if (pendingApprovalsError) {
+      console.error("Error fetching pending approvals:", pendingApprovalsError);
+      return res.status(500).json({ error: pendingApprovalsError.message });
+    }
+
+    // Combine all metrics into a single object
+    const dashboardMetrics = {
+      totalCreditsTraded: totalCreditsTraded,
+      newUsersThisMonth: newUsersCount,
+      pendingApprovals: pendingApprovalsCount,
+    };
+
+    // Send both metrics and the list of recent activities in the response
+    res.status(200).json({
+      metrics: dashboardMetrics,
+      activities: allActivities,
+    });
+  } catch (error) {
+    console.error("Error fetching dashboard data:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/dashboard-approvals", async (req, res) => {
+  try {
+    const { data: projectApprovals, error: projectError } = await supabase
+
+      .from("carbon_credits")
+
+      .select("*")
+
+      .eq("status", "pending")
+
+      .order("created_at", { ascending: false });
+
+    if (projectError) {
+      console.error("Error fetching approvals:", projectError);
+
+      return res.status(500).json({ error: projectError.message });
+    } // This line is now removed to send all data // const allApprovals = projectApprovals.map((item) => ({ ... })); // Send the full data array directly
+
+    res.status(200).json(projectApprovals);
+  } catch (error) {
+    console.error("Error fetching approvals:", error);
+
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/approve-project/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data, error } = await supabase
+      .from("carbon_credits")
+      .update({ status: "available" })
+      .eq("id", id);
+    if (error) {
+      throw error;
+    }
+    return res.status(200).json({ message: "Project has been approved" });
+  } catch (error) {
+    console.error("Error approving project:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/all-users", async (req, res) => {
+  try {
+    const { data: usersData, error: usersError } =
+      await supabaseAdmin.auth.admin.listUsers();
+    if (usersError) throw usersError;
+
+    // Extract user IDs to fetch profile data in a single query
+    const userIds = usersData.users.map((user) => user.id);
+
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, name, role") // Assuming you have a 'role' column in your profiles table
+      .in("id", userIds);
+
+    if (profilesError) throw profilesError;
+
+    // Combine user and profile data
+    const combinedUsers = usersData.users.map((user) => {
+      const profile = profiles.find((p) => p.id === user.id);
+      return {
+        id: user.id,
+        email: user.email,
+        created_at: user.created_at,
+        role: profile ? profile.role : "N/A", // Get role from profiles table
+      };
+    });
+
+    res.status(200).json(combinedUsers);
+  } catch (error) {
+    console.error("Error fetching all users:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
