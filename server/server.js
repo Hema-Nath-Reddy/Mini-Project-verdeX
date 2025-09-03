@@ -81,6 +81,45 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
+app.post("/api/logout", async (req, res) => {
+  try {
+    // 1. Get the current user session
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      // User is already logged out or no session exists
+      return res.status(200).json({ message: "No active session to log out." });
+    }
+
+    // You now have access to the user's unique identifiers
+    const userId = user.id;
+    const userEmail = user.email;
+
+    console.log(
+      `User with ID ${userId} and email ${userEmail} is logging out.`
+    );
+
+    // 2. Sign the user out
+    const { error: signOutError } = await supabase.auth.signOut();
+
+    if (signOutError) {
+      console.error("Sign out error:", signOutError.message);
+      return res.status(500).json({ error: signOutError.message });
+    }
+
+    return res.status(200).json({
+      message: "Logged out successfully",
+      logged_out_user: { id: userId, email: userEmail },
+    });
+  } catch (error) {
+    console.error("Logout error:", error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 /* 
 app.post("/api/logout", async (req, res) => {
   try {
