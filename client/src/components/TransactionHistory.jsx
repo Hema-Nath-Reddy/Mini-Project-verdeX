@@ -1,48 +1,145 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 const TransactionHistory = () => {
-  const transactionData = [
-    {
-      date: "15/08/2023",
-      action: "Buy",
-      company: "GreenTech Solutions",
-      amount: "₹830,000",
-      credits: 100,
-      status: "Completed",
-    },
-    {
-      date: "14/08/2023",
-      action: "Sell",
-      company: "EcoEnergy Corp",
-      amount: "₹415,000",
-      credits: 50,
-      status: "Completed",
-    },
-    {
-      date: "13/08/2023",
-      action: "Buy",
-      company: "Sustainable Industries",
-      amount: "₹1,245,000",
-      credits: 150,
-      status: "Pending",
-    },
-    {
-      date: "12/08/2023",
-      action: "Sell",
-      company: "CleanAir Innovations",
-      amount: "₹622,500",
-      credits: 75,
-      status: "Completed",
-    },
-    {
-      date: "11/08/2023",
-      action: "Buy",
-      company: "Renewable Resources Ltd",
-      amount: "₹996,000",
-      credits: 120,
-      status: "Completed",
-    },
-  ];
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/api/transactions");
+        if (response.ok) {
+          const result = await response.json();
+          setTransactions(result.transactions || []);
+        } else {
+          console.error("Failed to fetch transactions");
+          // Fallback to static data
+          setTransactions([
+            {
+              id: 1,
+              date: "15/08/2023",
+              action: "Buy",
+              company: "GreenTech Solutions",
+              amount: "₹830,000",
+              credits: 100,
+              status: "Completed",
+            },
+            {
+              id: 2,
+              date: "14/08/2023",
+              action: "Sell",
+              company: "EcoEnergy Corp",
+              amount: "₹415,000",
+              credits: 50,
+              status: "Completed",
+            },
+            {
+              id: 3,
+              date: "13/08/2023",
+              action: "Buy",
+              company: "Sustainable Industries",
+              amount: "₹1,245,000",
+              credits: 150,
+              status: "Pending",
+            },
+            {
+              id: 4,
+              date: "12/08/2023",
+              action: "Sell",
+              company: "CleanAir Innovations",
+              amount: "₹622,500",
+              credits: 75,
+              status: "Completed",
+            },
+            {
+              id: 5,
+              date: "11/08/2023",
+              action: "Buy",
+              company: "Renewable Resources Ltd",
+              amount: "₹996,000",
+              credits: 120,
+              status: "Completed",
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+        // Fallback to static data
+        setTransactions([
+          {
+            id: 1,
+            date: "15/08/2023",
+            action: "Buy",
+            company: "GreenTech Solutions",
+            amount: "₹830,000",
+            credits: 100,
+            status: "Completed",
+          },
+          {
+            id: 2,
+            date: "14/08/2023",
+            action: "Sell",
+            company: "EcoEnergy Corp",
+            amount: "₹415,000",
+            credits: 50,
+            status: "Completed",
+          },
+          {
+            id: 3,
+            date: "13/08/2023",
+            action: "Buy",
+            company: "Sustainable Industries",
+            amount: "₹1,245,000",
+            credits: 150,
+            status: "Pending",
+          },
+          {
+            id: 4,
+            date: "12/08/2023",
+            action: "Sell",
+            company: "CleanAir Innovations",
+            amount: "₹622,500",
+            credits: 75,
+            status: "Completed",
+          },
+          {
+            id: 5,
+            date: "11/08/2023",
+            action: "Buy",
+            company: "Renewable Resources Ltd",
+            amount: "₹996,000",
+            credits: 120,
+            status: "Completed",
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
+
+  const formatTransactionData = (transaction) => {
+    const date = new Date(transaction.transaction_date).toLocaleDateString('en-GB');
+    const amount = `₹${transaction.amount}`;
+    const action = "Buy"; // All transactions in the API are purchases
+    const status = "Completed"; // All transactions are completed
+    
+    return {
+      id: transaction.id,
+      date: date,
+      action: action,
+      company: `Transaction #${transaction.id}`,
+      amount: amount,
+      credits: transaction.quantity,
+      status: status,
+    };
+  };
+
+  const displayTransactions = transactions.length > 0 
+    ? transactions.map(formatTransactionData)
+    : [];
 
   return (
     <div className="ml-80 flex flex-col w-250">
@@ -75,7 +172,7 @@ const TransactionHistory = () => {
               </tr>
             </thead>
             <tbody>
-              {transactionData.map((row, index) => (
+              {displayTransactions.map((row, index) => (
                 <tr
                   key={index}
                   className="border-b border-gray-100 hover:bg-gray-50"

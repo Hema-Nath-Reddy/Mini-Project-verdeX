@@ -7,6 +7,8 @@ import AboutUs from "./pages/AboutUs";
 import Account from "./pages/Account";
 import Admin from "./pages/Admin";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const routes = [
@@ -33,11 +35,19 @@ function App() {
         },
         {
           path: "/account",
-          element: <Account />,
+          element: (
+            <ProtectedRoute>
+              <Account />
+            </ProtectedRoute>
+          ),
         },
         {
           path: "/admin",
-          element: <Admin />,
+          element: (
+            <ProtectedRoute requireAdmin={true}>
+              <Admin />
+            </ProtectedRoute>
+          ),
         },
       ],
     },
@@ -45,9 +55,11 @@ function App() {
 
   const router = createBrowserRouter(routes);
   return (
-    <div className="h-screen">
-      <RouterProvider router={router} />
-    </div>
+    <AuthProvider>
+      <div className="h-screen">
+        <RouterProvider router={router} />
+      </div>
+    </AuthProvider>
   );
 }
 

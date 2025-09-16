@@ -1,17 +1,41 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Leaf,
-  CircleUserRound,
   UserRoundCog,
   LogOut,
   ShieldUser,
 } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+
 const NavBar = () => {
-  const isLoggedIn = true;
-  const isAdmin = true;
+  const { user, isLoggedIn, isAdmin, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const menuRef = useRef(null);
+
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await logout();
+    navigate("/");
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuOpen]);
   return (
     <div className="w-full flex justify-between items-center h-15 bg-white sticky shadow-lg top-0 z-1000">
       <div className="font-bold ml-7.5 text-2xl flex flex-col gap-2">
@@ -22,12 +46,12 @@ const NavBar = () => {
           </p>
         </Link>
       </div>
-      <div className="flex align-center justify-center">
+      <div className="flex items-center justify-center">
         <Link
           to="/"
           className="font-semibold mr-5 text-lg hover:text-[#098409] hover:bg-[#0000001A] rounded-4xl px-4 py-2 transition-all duration-100"
         >
-          Homepage
+          Home
         </Link>
         <Link
           to="/marketplace"
@@ -35,12 +59,12 @@ const NavBar = () => {
         >
           Marketplace
         </Link>
-        <Link
+        {/* <Link
           to="/aboutus"
           className="font-semibold mr-5 text-lg hover:text-[#098409] hover:bg-[#0000001A] rounded-4xl px-4 py-2 transition-all duration-100"
         >
           About Us
-        </Link>
+        </Link> */}
         {!isLoggedIn ? (
           <>
             <Link
@@ -52,11 +76,12 @@ const NavBar = () => {
           </>
         ) : (
           <>
-            <CircleUserRound
-              color="#098409"
+            <div
               onClick={() => setMenuOpen(!menuOpen)}
-              className="accbtn mr-7.5 transition-all duration-100 h-10"
-            />
+              className="accbtn mr-7.5 transition-all duration-100 h-8 w-8 bg-[#098409] text-white rounded-full flex items-center justify-center font-medium text-lg cursor-pointer hover:bg-[#077307]"
+            >
+              {user?.name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || "U"}
+            </div>
             {menuOpen && (
               <div className="absolute right-2 top-17 w-50 flex flex-col bg-white border border-gray-300 rounded-xl shadow-lg z-50 hover:overflow-hidden">
                 <div
@@ -68,7 +93,7 @@ const NavBar = () => {
                 <hr className="border-gray-300" />
                 <div
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex gap-2 font-semibold"
-                  onClick={() => setMenuOpen(!menuOpen)}
+                  onClick={handleLogout}
                 >
                   <LogOut color="#ff5858" /> Logout
                 </div>

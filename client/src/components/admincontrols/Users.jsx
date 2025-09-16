@@ -1,43 +1,112 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 const Users = () => {
-  const usersData = [
-    {
-      username: "Ethan Bennett",
-      role: "Admin",
-      email: "ethan.bennett@example.com",
-      phone: "555-123-4567",
-      status: "Active",
-    },
-    {
-      username: "Sophia Carter",
-      role: "User",
-      email: "sophia.carter@example.com",
-      phone: "555-987-6543",
-      status: "Active",
-    },
-    {
-      username: "Caleb Murphy",
-      role: "User",
-      email: "caleb.murphy@example.com",
-      phone: "555-246-8013",
-      status: "Inactive",
-    },
-    {
-      username: "Isabella Hayes",
-      role: "Moderator",
-      email: "isabella.hayes@example.com",
-      phone: "555-369-1470",
-      status: "Active",
-    },
-    {
-      username: "Jackson Reed",
-      role: "User",
-      email: "jackson.reed@example.com",
-      phone: "555-159-7530",
-      status: "Active",
-    },
-  ];
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/api/all-users");
+        if (response.ok) {
+          const result = await response.json();
+          setUsers(result || []);
+        } else {
+          console.error("Failed to fetch users");
+          // Fallback to static data
+          setUsers([
+            {
+              id: "1",
+              email: "ethan.bennett@example.com",
+              created_at: "2023-01-15T10:30:00Z",
+              role: "Admin",
+            },
+            {
+              id: "2",
+              email: "sophia.carter@example.com",
+              created_at: "2023-02-20T14:45:00Z",
+              role: "User",
+            },
+            {
+              id: "3",
+              email: "caleb.murphy@example.com",
+              created_at: "2023-03-10T09:15:00Z",
+              role: "User",
+            },
+            {
+              id: "4",
+              email: "isabella.hayes@example.com",
+              created_at: "2023-04-05T16:20:00Z",
+              role: "Moderator",
+            },
+            {
+              id: "5",
+              email: "jackson.reed@example.com",
+              created_at: "2023-05-12T11:30:00Z",
+              role: "User",
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        // Fallback to static data
+        setUsers([
+          {
+            id: "1",
+            email: "ethan.bennett@example.com",
+            created_at: "2023-01-15T10:30:00Z",
+            role: "Admin",
+          },
+          {
+            id: "2",
+            email: "sophia.carter@example.com",
+            created_at: "2023-02-20T14:45:00Z",
+            role: "User",
+          },
+          {
+            id: "3",
+            email: "caleb.murphy@example.com",
+            created_at: "2023-03-10T09:15:00Z",
+            role: "User",
+          },
+          {
+            id: "4",
+            email: "isabella.hayes@example.com",
+            created_at: "2023-04-05T16:20:00Z",
+            role: "Moderator",
+          },
+          {
+            id: "5",
+            email: "jackson.reed@example.com",
+            created_at: "2023-05-12T11:30:00Z",
+            role: "User",
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  const formatUserData = (user) => {
+    const username = user.email.split('@')[0].replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const status = "Active"; // All users from API are considered active
+    const phone = "N/A"; // Phone not available in API response
+    
+    return {
+      id: user.id,
+      username: username,
+      role: user.role || "User",
+      email: user.email,
+      phone: phone,
+      status: status,
+      created_at: user.created_at,
+    };
+  };
+
+  const displayUsers = users.map(formatUserData);
   return (
     <div className="ml-80 flex flex-col w-250">
       <p className="text-left text-3xl font-extrabold">
@@ -66,7 +135,7 @@ const Users = () => {
               </tr>
             </thead>
             <tbody>
-              {usersData.map((row, index) => (
+              {displayUsers.map((row, index) => (
                 <tr
                   key={index}
                   className="border-b border-gray-100 hover:bg-gray-50"
