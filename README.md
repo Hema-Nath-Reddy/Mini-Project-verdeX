@@ -1,4 +1,4 @@
-<h1>🌱 Verdex – Carbon Credit Trading System</h1>
+<h1>Verdex – Carbon Credit Trading System</h1>
 
 <h2>Overview</h2>
 <p>
@@ -7,7 +7,7 @@ It allows users to <strong>buy, sell, and manage carbon credits</strong> in a tr
 The system includes both a <strong>user portal</strong> and an <strong>admin dashboard</strong> to handle transactions and manage accounts.  
 </p>
 
-<h2>🚀 Features</h2>
+<h2>Features</h2>
 <ul>
   <li><strong>User Authentication</strong> – Sign up, log in, and manage your profile.</li>
   <li><strong>Buy & Sell Credits</strong> – Trade carbon credits in a secure environment.</li>
@@ -18,21 +18,21 @@ The system includes both a <strong>user portal</strong> and an <strong>admin das
   <li><strong>Secure Roles</strong> – Role-based access (<code>user</code> and <code>admin</code>).</li>
 </ul>
 
-<h2>🛠 Tech Stack</h2>
+<h2>Tech Stack</h2>
 <ul>
   <li><strong>Frontend:</strong> React.js, Tailwind CSS</li>
   <li><strong>Backend:</strong> Node.js, Express.js</li>
   <li><strong>Database:</strong> PostgreSQL</li>
 </ul>
 
-<h2>📂 Project Structure</h2>
+<h2>Project Structure</h2>
 <pre>
 verdex/
 ├── client/   # React.js code
 ├── server/   # Node.js + Express.js APIs
 </pre>
 
-<h2>⚡ Getting Started</h2>
+<h2>Getting Started</h2>
 
 <h3>Prerequisites</h3>
 <ul>
@@ -69,7 +69,6 @@ npm run dev</code></pre>
   </li>
 </ol>
 
-<h2>🔮 Future Improvements</h2>
 <ul>
   <li>Add real-time market prices for credits</li>
   <li>Implement blockchain for transparent credit verification</li>
