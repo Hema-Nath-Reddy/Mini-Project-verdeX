@@ -125,113 +125,24 @@ app.post("/api/logout", async (req, res) => {
   }
 });
 
-/* 
-app.post("/api/logout", async (req, res) => {
+app.post("/api/resend-email", async (req, res) => {
   try {
-    const { sessionId } = req.body;
-    if (!sessionId || !sessions[sessionId]) {
-      return res.status(400).json({ error: "Invalid session" });
-    }
-
-    const refreshToken = sessions[sessionId].refresh_token;
-
-    const adminSupabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
-
-    const { error } = await adminSupabase.auth.admin.signOut(refreshToken);
-    if (error) {
-      return res.status(500).json({ error: error.message });
-    }
-    delete sessions[sessionId];
-
-    return res.status(200).json({ message: "Logged out successfully" });
-  } catch (error) {
-    console.error("Logout error:", error.message);
-    return res.status(500).json({ error: error.message });
-  }
-}); */
-/* app.post("/api/create-project", upload.any(), async (req, res) => {
-  try {
-    const { name, description, location, seller_id } = req.body;
-
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-
-    const file = req.files[0];
-    const ext = path.extname(file.originalname);
-
-    const filename = `${Date.now()}${ext}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("Projects")
-      .upload(filename, file.buffer, {
-        contentType: file.mimetype,
-      });
-
-    if (uploadError) {
-      return res.status(500).json({ error: uploadError.message });
-    }
-    const { data: publicUrlData } = supabase.storage
-      .from("Projects")
-      .getPublicUrl(filename);
-
-    const { error: dbError } = await supabase.from("Projects").insert([
-      {
-        name,
-        description,
-        location,
-        seller_id,
-        verification_document_url: publicUrlData.publicUrl,
+    const { email } = req.body;
+    const { data, error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: {
+        emailRedirectTo: "http://localhost:5173/login",
       },
-    ]);
-
-    if (dbError) {
-      return res.status(500).json({ error: dbError.message });
-    }
-
-    return res.status(201).json({
-      message: "Project created successfully",
-      file_url: publicUrlData.publicUrl,
     });
-  } catch (err) {
-    console.error("Error:", err);
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-app.get("/api/projects", async (req, res) => {
-  try {
-    const { data, error } = await supabase.from("Projects").select("*");
-    if (error) {
-      throw error;
-    }
-    return res.status(200).json({ projects: data });
+    if (error) return res.status(400).json({ error: error.message });
+    return res.json({ ok: true, data });
   } catch (error) {
-    console.error("Error fetching projects:", error);
     return res.status(500).json({ error: error.message });
   }
 });
 
-app.get("/api/projects/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { data, error } = await supabase
-      .from("Projects")
-      .select("*")
-      .eq("id", id)
-      .single();
-    if (error) {
-      throw error;
-    }
-    return res.status(200).json({ project: data });
-  } catch (error) {
-    console.error("Error fetching project:", error);
-    return res.status(500).json({ error: error.message });
-  }
-}); */
+
 app.post("/api/create-carbon-credit", upload.any(), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
@@ -514,6 +425,7 @@ app.get("/api/support-requests/:id", async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 });
+
 app.get("/api/dashboard-activity", async (req, res) => {
   try {
     // ---- Fetch recent activities for display ----
