@@ -1,45 +1,157 @@
-import { UserCircle } from "lucide-react";
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import toast from "react-hot-toast";
 
 const Overview = (props) => {
   console.log("Props received by Overview component:", props);
+  const { user, refreshUserData } = useAuth();
+  
+  const [userData, setUserData] = useState({
+    name: user?.name || user?.email?.split('@')[0] || "User Name",
+    email: user?.email || "user@example.com",
+    balance: user?.balance || 0,
+    creditsTraded: 0,
+    impactScore: 70
+  });
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const transactionData = [
-    {
-      date: "2023-08-15",
-      type: "Purchase",
-      amount: "50 Credits",
-      status: "Completed",
-    },
-    {
-      date: "2023-08-10",
-      type: "Sale",
-      amount: "30 Credits",
-      status: "Completed",
-    },
-    {
-      date: "2023-08-05",
-      type: "Purchase",
-      amount: "20 Credits",
-      status: "Completed",
-    },
-    {
-      date: "2023-07-28",
-      type: "Sale",
-      amount: "40 Credits",
-      status: "Completed",
-    },
-    {
-      date: "2023-07-20",
-      type: "Purchase",
-      amount: "10 Credits",
-      status: "Completed",
-    },
-  ];
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Refresh user data to get latest balance
+        await refreshUserData();
+        
+        // Use the updated user data
+        setUserData({
+          name: user?.name || user?.email?.split('@')[0] || "User Name",
+          email: user?.email || "user@example.com",
+          balance: user?.balance || 0,
+          creditsTraded: 0,
+          impactScore: 70
+        });
+
+        // Fetch recent transactions
+        const response = await fetch("http://localhost:3001/api/transactions");
+        if (response.ok) {
+          const result = await response.json();
+          const recentTransactions = (result.transactions || []).slice(0, 5).map(transaction => ({
+            date: new Date(transaction.transaction_date).toLocaleDateString(),
+            type: "Purchase",
+            amount: `${transaction.quantity} Credits`,
+            status: "Completed",
+          }));
+          setTransactions(recentTransactions);
+        } else {
+          // Fallback to static data
+          setTransactions([
+            {
+              date: "2023-08-15",
+              type: "Purchase",
+              amount: "50 Credits",
+              status: "Completed",
+            },
+            {
+              date: "2023-08-10",
+              type: "Sale",
+              amount: "30 Credits",
+              status: "Completed",
+            },
+            {
+              date: "2023-08-05",
+              type: "Purchase",
+              amount: "20 Credits",
+              status: "Completed",
+            },
+            {
+              date: "2023-07-28",
+              type: "Sale",
+              amount: "40 Credits",
+              status: "Completed",
+            },
+            {
+              date: "2023-07-20",
+              type: "Purchase",
+              amount: "10 Credits",
+              status: "Completed",
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        // Fallback to static data
+        setUserData({
+          name: user?.name || user?.email?.split('@')[0] || "User Name",
+          email: user?.email || "user@example.com",
+          balance: user?.balance || 0,
+          creditsTraded: 0,
+          impactScore: 70
+        });
+        setTransactions([
+          {
+            date: "2023-08-15",
+            type: "Purchase",
+            amount: "50 Credits",
+            status: "Completed",
+          },
+          {
+            date: "2023-08-10",
+            type: "Sale",
+            amount: "30 Credits",
+            status: "Completed",
+          },
+          {
+            date: "2023-08-05",
+            type: "Purchase",
+            amount: "20 Credits",
+            status: "Completed",
+          },
+          {
+            date: "2023-07-28",
+            type: "Sale",
+            amount: "40 Credits",
+            status: "Completed",
+          },
+          {
+            date: "2023-07-20",
+            type: "Purchase",
+            amount: "10 Credits",
+            status: "Completed",
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [user, refreshUserData]);
+
+  // Add a separate effect to update userData when user changes
+  useEffect(() => {
+    if (user) {
+      setUserData({
+        name: user.name || user.email?.split('@')[0] || "User Name",
+        email: user.email || "user@example.com",
+        balance: user.balance || 0,
+        creditsTraded: 0,
+        impactScore: 70
+      });
+    }
+  }, [user]);
 
   const handleViewAllClick = () => {
     console.log("Clicked 'View all transactions...'");
     props.onViewChange("history");
+  };
+
+  const handleRefreshBalance = async () => {
+    try {
+      await refreshUserData();
+      toast.success("Balance refreshed!");
+    } catch (error) {
+      toast.error("Failed to refresh balance");
+    }
   };
 
   return (
@@ -49,13 +161,15 @@ const Overview = (props) => {
       </p>
       <div className="w-full mt-4 flex items-center justify-between">
         <div className="flex flex-row gap-2 justify-center items-center">
-          <UserCircle className="h-20 w-20" />
+          <div className="h-20 w-20 bg-[#098409] text-white rounded-full flex items-center justify-center font-bold text-3xl">
+            {userData.name?.charAt(0)?.toUpperCase() || "U"}
+          </div>
           <div>
             <p className="text-left text-lg font-medium text-[#098409]">
-              User Name
+              {userData.name}
             </p>
             <p className="text-left text-sm text-gray-500">Joined 2025</p>
-            <p className="text-left text-sm text-gray-500">user@example.com</p>
+            <p className="text-left text-sm text-gray-500">{userData.email}</p>
           </div>
         </div>
         <div>
@@ -67,16 +181,27 @@ const Overview = (props) => {
       <hr className="border-gray-200 mt-5 mb-5" />
       <div className="card-container flex flex-row justify-between w-full gap-4">
         <div className="card bg-white w-90 px-4 py-6 border border-gray-200 rounded-xl">
-          <p className="">Balance</p>
-          <h3 className="text-3xl font-bold text-[#098409]">$85</h3>
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="">Balance</p>
+              <h3 className="text-3xl font-bold text-[#098409]">₹{userData.balance}</h3>
+            </div>
+            <button 
+              onClick={handleRefreshBalance}
+              className="text-xs text-gray-500 hover:text-[#098409] transition-colors"
+              title="Refresh balance"
+            >
+              ↻
+            </button>
+          </div>
         </div>
         <div className="card bg-white w-90 p-4 py-6 border border-gray-200 rounded-xl">
           <p className="">Credits Traded</p>
-          <h3 className="text-3xl font-bold text-[#098409]">246</h3>
+          <h3 className="text-3xl font-bold text-[#098409]">{userData.creditsTraded}</h3>
         </div>
         <div className="card bg-white w-90 p-4 py-6 border border-gray-200 rounded-xl">
           <p className="">Impact Score</p>
-          <h3 className="text-3xl font-bold text-[#098409]">70</h3>
+          <h3 className="text-3xl font-bold text-[#098409]">{userData.impactScore}</h3>
         </div>
       </div>
       <hr className="border-gray-200 mt-5" />
@@ -121,7 +246,7 @@ const Overview = (props) => {
               </tr>
             </thead>
             <tbody>
-              {transactionData.map((row, index) => (
+              {transactions.map((row, index) => (
                 <tr
                   key={index}
                   className="border-b border-gray-100 hover:bg-gray-50"

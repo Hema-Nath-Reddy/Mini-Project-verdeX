@@ -3,8 +3,12 @@ import { Link } from "react-router-dom";
 import time from "../assets/time.svg";
 import tick from "../assets/tick.svg";
 import graph from "../assets/graph.svg";
+import { useAuth } from "../contexts/AuthContext";
+
+  
 
 const Home = () => {
+  const { user, isLoggedIn, isAdmin, logout } = useAuth();
   return (
     <div className="hero-container w-full mt-15">
       <div className="hero h-120 w-250 m-auto rounded-xl flex flex-col justify-center items-center">
@@ -20,12 +24,14 @@ const Home = () => {
             environmental goals.
           </p>
           <div className="homebtns">
+          {!isLoggedIn &&
             <Link
               to="/login"
               className="homebtn font-semibold rounded-4xl px-4 py-2 mr-7.5 text-lg transition-all duration-100"
             >
               Sign Up
             </Link>
+          }
             <Link
               to="/marketplace"
               className="homebtn font-semibold rounded-4xl px-4 py-2 mr-7.5 text-lg transition-all duration-100"

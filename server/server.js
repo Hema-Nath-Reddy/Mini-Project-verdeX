@@ -45,6 +45,7 @@ app.post("/api/signup", async (req, res) => {
         name: name,
         phone: phone,
         balance: 100,
+        role: role,
         created_at: new Date(),
       },
     ]);
@@ -77,8 +78,30 @@ app.post("/api/login", async (req, res) => {
     if (error) {
       return res.status(401).json({ error: error.message });
     }
+
+    // Fetch user profile data including role and balance
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", data.user.id)
+      .single();
+
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
+      return res.status(500).json({ error: "Error fetching user profile" });
+    }
+
+    // Combine auth data with profile data
+    const userData = {
+      ...data.user,
+      ...profileData
+    };
+
     return res.status(200).json({
-      data,
+      data: {
+        ...data,
+        user: userData
+      },
     });
   } catch (error) {
     console.error("Login error:", error);
@@ -282,7 +305,7 @@ app.post("/api/create-carbon-credit", upload.any(), async (req, res) => {
       quantity,
       verification_document_url: verification_document_url,
       type,
-      trendValue,
+      trendValue: Math.floor(Math.random() * 101), // Random value from 0-100
       name,
       description,
       location,
@@ -298,6 +321,120 @@ app.post("/api/create-carbon-credit", upload.any(), async (req, res) => {
       .json({ message: "Carbon credits created successfully" });
   } catch (error) {
     console.error("Error creating carbon credits:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Temporary endpoint to make a user admin (remove in production)
+app.post("/api/make-admin", async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    // Find user by email
+    const { data: users, error: userError } = await supabase.auth.admin.listUsers();
+    if (userError) {
+      return res.status(500).json({ error: userError.message });
+    }
+
+    const user = users.users.find(u => u.email === email);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Update user role to admin
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ role: 'admin' })
+      .eq("id", user.id);
+
+    if (updateError) {
+      console.error("Error updating user role:", updateError);
+      return res.status(500).json({ error: updateError.message });
+    }
+
+    return res.status(200).json({ message: "User role updated to admin successfully" });
+  } catch (error) {
+    console.error("Error making user admin:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/update-user-role", async (req, res) => {
+  try {
+    const { userId, role } = req.body;
+    
+    // Only allow admin users to update roles
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    // Check if current user is admin
+    const { data: currentUserProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || currentUserProfile.role !== 'admin') {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    // Update the target user's role
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ role: role })
+      .eq("id", userId);
+
+    if (updateError) {
+      console.error("Error updating user role:", updateError);
+      return res.status(500).json({ error: updateError.message });
+    }
+
+    return res.status(200).json({ message: "User role updated successfully" });
+  } catch (error) {
+    console.error("Error updating user role:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/user-profile", async (req, res) => {
+  try {
+    // Get the current user from the session
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    // Fetch user profile data
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
+      return res.status(500).json({ error: "Error fetching user profile" });
+    }
+
+    // Combine auth data with profile data
+    const userData = {
+      ...user,
+      ...profileData
+    };
+
+    return res.status(200).json({ user: userData });
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
     return res.status(500).json({ error: error.message });
   }
 });
@@ -368,7 +505,9 @@ app.post("/api/buy-carbon-credit/:id", async (req, res) => {
     const buyerBalance = buyerData.balance;
 
     if (buyerBalance < amount) {
-      return res.status(400).json({ error: "Buyer has insufficient funds" });
+      return res.status(400).json({ 
+        error: `Insufficient balance. You need ₹${amount} but have ₹${buyerBalance}` 
+      });
     }
 
     // 3. Update buyer balance (subtract amount)

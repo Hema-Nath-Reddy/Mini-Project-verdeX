@@ -2,8 +2,12 @@ import React, { useState } from "react";
 import { EyeClosed, Eye } from "lucide-react";
 import toast from "react-hot-toast";
 import { Toaster } from "react-hot-toast";
+import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
+  const { login, signup, isLoggedIn } = useAuth();
+  const navigate = useNavigate();
   const [isSignup, setIsSignup] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [email, setEmail] = useState("");
@@ -12,67 +16,41 @@ const Login = () => {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Redirect if already logged in
+  React.useEffect(() => {
+    if (isLoggedIn) {
+      navigate("/account");
+    }
+  }, [isLoggedIn, navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
-    if (isSignup) {
-      setLoading(true);
-      try {
-        const response = await fetch("http://localhost:3001/api/signup", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-            name,
-            phone,
-          }),
-        });
-        if (response.ok) {
-          toast.success(
-            "An email has been sent to you. Please verify your email address.",
-          );
+    
+    setLoading(true);
+    
+    try {
+      if (isSignup) {
+        const result = await signup(email, password, name, phone);
+        if (result.success) {
           setEmail("");
           setPassword("");
           setName("");
           setPhone("");
-        } else {
-          alert("Signup failed. Please try again.");
+          setIsSignup(false); // Switch to login form after successful signup
         }
-      } catch (error) {
-        toast.error("Network error. Please try again.");
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      setLoading(true);
-      try {
-        const response = await fetch("http://localhost:3001/api/login", {
-          method: "POST",
-          headers: {
-            "Content-type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
-        });
-        if (response.ok) {
-          toast.success("Login successful");
+      } else {
+        const result = await login(email, password);
+        if (result.success) {
           setEmail("");
           setPassword("");
-        } else {
-          toast.error("Login failed. Please try again.");
+          navigate("/account");
         }
-      } catch (error) {
-        toast.error("Network error. Please try again.");
-        console.log(error);
-      } finally {
-        setLoading(false);
       }
+    } catch (error) {
+      console.error("Auth error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 

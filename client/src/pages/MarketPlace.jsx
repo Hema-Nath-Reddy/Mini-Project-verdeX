@@ -1,13 +1,18 @@
 import React from "react";
 import { Search, ChevronDown, ChevronUp, X } from "lucide-react"; // Import the X icon
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
+import toast, { Toaster } from "react-hot-toast";
+import { useAuth } from "../contexts/AuthContext";
 
 const MarketPlace = (props) => {
+  const { user, refreshUserData } = useAuth();
   const [priceToggle, setPriceToggle] = useState(true);
   const [companyToggle, setCompanyToggle] = useState(true);
-
   const [activeSort, setActiveSort] = useState(null);
+  const [carbonCredits, setCarbonCredits] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { data } = props;
 
@@ -44,8 +49,49 @@ const MarketPlace = (props) => {
     },
   ];
 
-  const initialData = data || defaultData;
+  // Fetch carbon credits from API
+  useEffect(() => {
+    const fetchCarbonCredits = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/api/carbon-credits");
+        if (response.ok) {
+          const result = await response.json();
+          const formattedData = result.carbon_credits.map(credit => ({
+            id: credit.id,
+            seller_id: credit.seller_id,
+            company: credit.name || "Unknown Company",
+            creditsAvailable: credit.quantity?.toString() || "0",
+            pricePerCredit: `₹${credit.price_per_credit || 0}`,
+            trendValue: credit.trendValue || Math.floor(Math.random() * 101), // Use stored trend value or generate if missing
+            description: credit.description,
+            location: credit.location,
+            type: credit.type,
+            issue_date: credit.issue_date,
+            expiry_date: credit.expiry_date
+          }));
+          setCarbonCredits(formattedData);
+        } else {
+          console.error("Failed to fetch carbon credits");
+          setCarbonCredits(defaultData);
+        }
+      } catch (error) {
+        console.error("Error fetching carbon credits:", error);
+        setCarbonCredits(defaultData);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCarbonCredits();
+  }, []);
+
+  const initialData = data || carbonCredits.length > 0 ? carbonCredits : defaultData;
   const [displayData, setDisplayData] = useState(initialData);
+
+  // Update display data when carbon credits change
+  useEffect(() => {
+    setDisplayData(carbonCredits.length > 0 ? carbonCredits : defaultData);
+  }, [carbonCredits]);
 
   const handleSortByPrice = (direction) => {
     const sortedData = [...displayData].sort((a, b) => {
@@ -70,7 +116,7 @@ const MarketPlace = (props) => {
   };
 
   const clearSort = () => {
-    setDisplayData(initialData);
+    setDisplayData(carbonCredits.length > 0 ? carbonCredits : defaultData);
     setActiveSort(null);
   };
 
@@ -79,6 +125,113 @@ const MarketPlace = (props) => {
     price_desc: "Price: High - Low",
     company_asc: "Company: A-Z",
     company_desc: "Company: Z-A",
+  };
+
+  const handleBuyCredit = async (creditId, sellerId, quantity, pricePerCredit) => {
+    // Validate required data
+    if (!user?.id) {
+      toast.error("Please log in to purchase credits");
+      return;
+    }
+    
+    if (!sellerId) {
+      toast.error("Invalid seller information");
+      return;
+    }
+    
+    if (!quantity || !pricePerCredit) {
+      toast.error("Invalid quantity or price");
+      return;
+    }
+
+    // Calculate total amount
+    const totalAmount = parseInt(quantity) * parseFloat(pricePerCredit);
+    
+    // Check if user has sufficient balance
+    if (user.balance < totalAmount) {
+      toast.error(`Insufficient balance. You need ₹${totalAmount} but have ₹${user.balance}`);
+      return;
+    }
+
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Purchase ${quantity} credits for ₹${totalAmount}?\n\n` +
+      `Price per credit: ₹${pricePerCredit}\n` +
+      `Quantity: ${quantity}\n` +
+      `Total: ₹${totalAmount}\n` +
+      `Your balance after purchase: ₹${user.balance - totalAmount}`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      console.log("Purchase request:", {
+        creditId,
+        buyer_id: user.id,
+        seller_id: sellerId,
+        quantity: parseInt(quantity),
+        amount: totalAmount
+      });
+
+      const response = await fetch(`http://localhost:3001/api/buy-carbon-credit/${creditId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          buyer_id: user.id,
+          seller_id: sellerId,
+          quantity: parseInt(quantity),
+          amount: totalAmount,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Credit purchased successfully!");
+        
+        // Refresh user data to update balance
+        await refreshUserData();
+        
+        // Refresh the carbon credits list
+        const updatedResponse = await fetch("http://localhost:3001/api/carbon-credits");
+        if (updatedResponse.ok) {
+          const result = await updatedResponse.json();
+          const formattedData = result.carbon_credits.map(credit => ({
+            id: credit.id,
+            seller_id: credit.seller_id,
+            company: credit.name || "Unknown Company",
+            creditsAvailable: credit.quantity?.toString() || "0",
+            pricePerCredit: `₹${credit.price_per_credit || 0}`,
+            trendValue: credit.trendValue || Math.floor(Math.random() * 101), // Use stored trend value or generate if missing
+            description: credit.description,
+            location: credit.location,
+            type: credit.type,
+            issue_date: credit.issue_date,
+            expiry_date: credit.expiry_date
+          }));
+          setCarbonCredits(formattedData);
+        }
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Failed to purchase credit");
+      }
+    } catch (error) {
+      console.error("Error buying credit:", error);
+      toast.error("Network error. Please try again.");
+    }
+  };
+
+  const handleSearch = (e) => {
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
+    const filteredData = (carbonCredits.length > 0 ? carbonCredits : defaultData).filter(item =>
+      item.company.toLowerCase().includes(term) ||
+      item.type?.toLowerCase().includes(term) ||
+      item.location?.toLowerCase().includes(term)
+    );
+    setDisplayData(filteredData);
   };
 
   return (
@@ -91,11 +244,20 @@ const MarketPlace = (props) => {
           <p className="w-250 text-left text-s font-medium mt-3">
             Explore carbon credit listings from various companies.
           </p>
+          {user && (
+            <div className="w-250 text-left mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-700 font-medium">
+                Your Balance: <span className="text-lg font-bold text-green-800">₹{user.balance || 0}</span>
+              </p>
+            </div>
+          )}
           <form className="searchbar">
             <input
               className="w-250 text-s font-medium bg-gray-100 p-4 pl-14 rounded-xl"
               type="text"
               placeholder="Search for companies or credits"
+              value={searchTerm}
+              onChange={handleSearch}
             />
             <Search className="search-icon" color="gray" />
           </form>
@@ -211,9 +373,16 @@ const MarketPlace = (props) => {
                         </div>
                       </td>
                       <td className="py-6 px-6">
-                        <button className="text-gray-600 hover:text-gray-800 font-medium text-sm transition-colors">
-                          Buy
-                        </button>
+                        {user ? (
+                          <button 
+                            onClick={() => handleBuyCredit(row.id, row.seller_id, row.creditsAvailable, row.pricePerCredit.replace(/[^0-9.-]+/g, ""))}
+                            className="bg-gray-400 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-[#098409] transition-colors duration-200 cursor-pointer"
+                          >
+                            Buy
+                          </button>
+                        ) : (
+                          <span className="text-gray-400 text-sm">Login to buy</span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -223,6 +392,7 @@ const MarketPlace = (props) => {
           </div>
         </div>
       </div>
+      <Toaster position="bottom-right" />
     </div>
   );
 };

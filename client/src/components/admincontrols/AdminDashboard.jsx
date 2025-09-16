@@ -1,38 +1,115 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 const AdminDashboard = () => {
-  const activityData = [
-    {
-      activity: "Carbon Offset Project A Submitted",
-      type: "New Project",
-      user: "Sophia Clark",
-      timestamp: "2023-09-26 11:00 AM",
+  const [dashboardData, setDashboardData] = useState({
+    metrics: {
+      totalCreditsTraded: 0,
+      newUsersThisMonth: 0,
+      pendingApprovals: 0,
     },
-    {
-      activity: "Sustainability Initiative B Submitted",
-      type: "Partnership",
-      user: "Caleb Reed",
-      timestamp: "2023-09-25 02:30 PM",
-    },
-    {
-      activity: "Eco-Friendly Product C Submitted",
-      type: "Product Listing",
-      user: "Isabella Wright",
-      timestamp: "2023-09-24 08:45 AM",
-    },
-    {
-      activity: "User Account Created",
-      type: "User Registration",
-      user: "Ethan Bennett",
-      timestamp: "2023-09-23 09:15 AM",
-    },
-    {
-      activity: "Credit Purchase",
-      type: "Transaction",
-      user: "Olivia Carter",
-      timestamp: "2023-09-22 04:50 PM",
-    },
-  ];
+    activities: []
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/api/dashboard-activity");
+        if (response.ok) {
+          const result = await response.json();
+          setDashboardData(result);
+        } else {
+          console.error("Failed to fetch dashboard data");
+          // Fallback to static data
+          setDashboardData({
+            metrics: {
+              totalCreditsTraded: 1250000,
+              newUsersThisMonth: 350,
+              pendingApprovals: 15,
+            },
+            activities: [
+              {
+                activityType: "Carbon Offset Project A Submitted",
+                description: "New Project",
+                user: "Sophia Clark",
+                timestamp: "2023-09-26 11:00 AM",
+              },
+              {
+                activityType: "Sustainability Initiative B Submitted",
+                description: "Partnership",
+                user: "Caleb Reed",
+                timestamp: "2023-09-25 02:30 PM",
+              },
+              {
+                activityType: "Eco-Friendly Product C Submitted",
+                description: "Product Listing",
+                user: "Isabella Wright",
+                timestamp: "2023-09-24 08:45 AM",
+              },
+              {
+                activityType: "User Account Created",
+                description: "User Registration",
+                user: "Ethan Bennett",
+                timestamp: "2023-09-23 09:15 AM",
+              },
+              {
+                activityType: "Credit Purchase",
+                description: "Transaction",
+                user: "Olivia Carter",
+                timestamp: "2023-09-22 04:50 PM",
+              },
+            ]
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        // Fallback to static data
+        setDashboardData({
+          metrics: {
+            totalCreditsTraded: 1250000,
+            newUsersThisMonth: 350,
+            pendingApprovals: 15,
+          },
+          activities: [
+            {
+              activityType: "Carbon Offset Project A Submitted",
+              description: "New Project",
+              user: "Sophia Clark",
+              timestamp: "2023-09-26 11:00 AM",
+            },
+            {
+              activityType: "Sustainability Initiative B Submitted",
+              description: "Partnership",
+              user: "Caleb Reed",
+              timestamp: "2023-09-25 02:30 PM",
+            },
+            {
+              activityType: "Eco-Friendly Product C Submitted",
+              description: "Product Listing",
+              user: "Isabella Wright",
+              timestamp: "2023-09-24 08:45 AM",
+            },
+            {
+              activityType: "User Account Created",
+              description: "User Registration",
+              user: "Ethan Bennett",
+              timestamp: "2023-09-23 09:15 AM",
+            },
+            {
+              activityType: "Credit Purchase",
+              description: "Transaction",
+              user: "Olivia Carter",
+              timestamp: "2023-09-22 04:50 PM",
+            },
+          ]
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
   return (
     <div className="ml-80 flex flex-col w-250">
       <p className="text-left text-3xl font-extrabold">
@@ -41,17 +118,17 @@ const AdminDashboard = () => {
       <div className="card-container mt-5 flex flex-row justify-between gap-4">
         <div className="card w-90 px-4 py-6 h-40 bg-white rounded-xl flex flex-col justify-center gap-2">
           <p className="">Total Credits Traded</p>
-          <h3 className="text-3xl font-bold">1,250,000</h3>
+          <h3 className="text-3xl font-bold">{dashboardData.metrics.totalCreditsTraded.toLocaleString()}</h3>
           <p className="text-[#098409] font-semibold">+5%</p>
         </div>
         <div className="card w-90 px-4 py-6 h-40 bg-white rounded-xl flex flex-col justify-center gap-2">
           <p className="">New Users This Month</p>
-          <h3 className="text-3xl font-bold">350</h3>
+          <h3 className="text-3xl font-bold">{dashboardData.metrics.newUsersThisMonth}</h3>
           <p className="text-[#098409] font-semibold">+10%</p>
         </div>
         <div className="card w-90 px-4 py-6 h-40 bg-white rounded-xl flex flex-col justify-center gap-2">
           <p className="">Pending Approvals</p>
-          <h3 className="text-3xl font-bold">15</h3>
+          <h3 className="text-3xl font-bold">{dashboardData.metrics.pendingApprovals}</h3>
           <p className="text-[#098409] font-semibold">+15%</p>
         </div>
       </div>
@@ -78,17 +155,17 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {activityData.map((row, index) => (
+              {dashboardData.activities.map((row, index) => (
                 <tr
                   key={index}
                   className="border-b border-gray-100 hover:bg-gray-50"
                 >
                   <td className="py-5 px-6 text-gray-900 font-medium">
-                    {row.activity}
+                    {row.activityType}
                   </td>
-                  <td className="py-5 px-6 text-green-700">{row.type}</td>
+                  <td className="py-5 px-6 text-green-700">{row.description}</td>
                   <td className="py-5 px-6 text-green-700">{row.user}</td>
-                  <td className="py-5 px-6 text-gray-700">{row.timestamp}</td>
+                  <td className="py-5 px-6 text-gray-700">{new Date(row.timestamp).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
