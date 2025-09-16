@@ -83,10 +83,14 @@ const NavBar = () => {
               {user?.name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || "U"}
             </div>
             {menuOpen && (
+<<<<<<< HEAD
               <div 
                 ref={menuRef}
                 className="absolute right-2 top-17 w-50 flex flex-col bg-white border border-gray-300 rounded-xl shadow-lg z-50 hover:overflow-hidden"
               >
+=======
+              <div className="absolute right-2 top-17 w-50 flex flex-col bg-white border border-gray-300 rounded-xl shadow-lg z-50 hover:overflow-hidden">
+>>>>>>> c094e390006057ef1d990be96feecebb26a2d511
                 <div
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex gap-2 font-semibold"
                   onClick={() => setMenuOpen(!menuOpen) & navigate("/account")}
@@ -106,7 +110,8 @@ const NavBar = () => {
                     className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex gap-2 font-semibold text-[#143153ff]"
                     onClick={() => setMenuOpen(!menuOpen) & navigate("/admin")}
                   >
-                    <ShieldUser color="#143153ff" /> Admin Controls
+                    <ShieldUser color="#143153ff" className="overflow-hidden" />{" "}
+                    Admin Controls
                   </div>
                 )}
               </div>
