@@ -2,6 +2,7 @@ const multer = require("multer");
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
+const crypto = require("crypto");
 const { client, createClient } = require("@supabase/supabase-js");
 require("dotenv").config();
 
@@ -22,10 +23,67 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// MPIN encryption/decryption functions
+const ENCRYPTION_KEY = process.env.MPIN_ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
+const ALGORITHM = 'aes-256-cbc';
+
+function encryptMPIN(mpin) {
+  try {
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipher(ALGORITHM, ENCRYPTION_KEY);
+    let encrypted = cipher.update(mpin, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return iv.toString('hex') + ':' + encrypted;
+  } catch (error) {
+    console.error('Error encrypting MPIN:', error);
+    return null;
+  }
+}
+
+function decryptMPIN(encryptedMPIN) {
+  try {
+    const textParts = encryptedMPIN.split(':');
+    const iv = Buffer.from(textParts.shift(), 'hex');
+    const encryptedText = textParts.join(':');
+    const decipher = crypto.createDecipher(ALGORITHM, ENCRYPTION_KEY);
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch (error) {
+    console.error('Error decrypting MPIN:', error);
+    return null;
+  }
+}
+
+function verifyMPIN(inputMPIN, encryptedMPIN) {
+  try {
+    const decryptedMPIN = decryptMPIN(encryptedMPIN);
+    return decryptedMPIN === inputMPIN;
+  } catch (error) {
+    console.error('Error verifying MPIN:', error);
+    return false;
+  }
+}
+
 app.post("/api/signup", async (req, res) => {
   try {
-    const { email, password, name, phone } = req.body;
-    const role = req.body.role || "user"; // 1. Create the user in the authentication system
+    const { email, password, name, phone, mpin } = req.body;
+    const role = req.body.role || "user";
+
+    // Validate MPIN
+    if (!mpin || mpin.length < 4 || mpin.length > 6) {
+      return res.status(400).json({ 
+        error: "MPIN is required and must be 4-6 digits" 
+      });
+    }
+
+    // Encrypt MPIN
+    const encryptedMPIN = encryptMPIN(mpin);
+    if (!encryptedMPIN) {
+      return res.status(500).json({ 
+        error: "Failed to encrypt MPIN" 
+      });
+    }
 
     const { data: userData, error: authError } = await supabase.auth.signUp({
       email,
@@ -46,6 +104,7 @@ app.post("/api/signup", async (req, res) => {
         phone: phone,
         balance: 100,
         role: role,
+        mpin: encryptedMPIN,
         created_at: new Date(),
       },
     ]);
@@ -309,19 +368,40 @@ app.put("/api/profile", async (req, res) => {
       return res.status(401).json({ error: "Unauthorized. Please log in." });
     }
 
-    const { name, phone } = req.body;
+    const { name, phone, mpin } = req.body;
 
-    // Validate input - role cannot be modified by users
-    if (!name && !phone) {
+    // Validate input - role and balance cannot be modified by users
+    if (!name && !phone && !mpin) {
       return res.status(400).json({ 
-        error: "At least one field (name, phone) must be provided for update" 
+        error: "At least one field (name, phone, mpin) must be provided for update" 
       });
+    }
+
+    // Validate MPIN if provided
+    if (mpin !== undefined) {
+      if (!mpin || mpin.length < 4 || mpin.length > 6) {
+        return res.status(400).json({ 
+          error: "MPIN must be 4-6 digits" 
+        });
+      }
     }
 
     // Prepare update data (excluding role and balance)
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (phone !== undefined) updateData.phone = phone;
+    
+    // Handle MPIN update with encryption
+    if (mpin !== undefined) {
+      const encryptedMPIN = encryptMPIN(mpin);
+      if (!encryptedMPIN) {
+        return res.status(500).json({ 
+          error: "Failed to encrypt MPIN" 
+        });
+      }
+      updateData.mpin = encryptedMPIN;
+    }
+    
     updateData.updated_at = new Date();
 
     // Update profile in database
@@ -341,6 +421,16 @@ app.put("/api/profile", async (req, res) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
+    // Create notification for MPIN update
+    if (mpin !== undefined) {
+      await createNotification(
+        user.id,
+        "MPIN Updated",
+        "Your MPIN has been successfully updated. Please use your new MPIN for future transactions.",
+        "unread"
+      );
+    }
+
     return res.status(200).json({
       message: "Profile updated successfully",
       profile: {
@@ -351,6 +441,7 @@ app.put("/api/profile", async (req, res) => {
         role: updatedProfile.role,
         created_at: updatedProfile.created_at,
         updated_at: updatedProfile.updated_at
+        // Note: MPIN is not returned in response for security
       }
     });
   } catch (error) {
@@ -883,12 +974,19 @@ app.get("/api/carbon-credit/:id", async (req, res) => {
 app.post("/api/buy-carbon-credit/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { buyer_id, requested_quantity } = req.body;
+    const { buyer_id, requested_quantity, mpin } = req.body;
 
     // Validate input
-    if (!buyer_id || !requested_quantity || requested_quantity <= 0) {
+    if (!buyer_id || !requested_quantity || requested_quantity <= 0 || !mpin) {
       return res.status(400).json({ 
-        error: "Buyer ID and valid quantity are required" 
+        error: "Buyer ID, valid quantity, and MPIN are required" 
+      });
+    }
+
+    // Validate MPIN format
+    if (mpin.length < 4 || mpin.length > 6) {
+      return res.status(400).json({ 
+        error: "MPIN must be 4-6 digits" 
       });
     }
 
@@ -917,16 +1015,34 @@ app.post("/api/buy-carbon-credit/:id", async (req, res) => {
     // 3. Calculate amount based on price per credit
     const amount = requested_quantity * creditData.price_per_credit;
 
-    // 4. Fetch buyer balance
+    // 4. Fetch buyer profile including balance and MPIN
     const { data: buyerData, error: buyerFetchError } = await supabase
       .from("profiles")
-      .select("balance")
+      .select("balance, mpin")
       .eq("id", buyer_id)
       .single();
 
     if (buyerFetchError) {
-      console.error("Error fetching buyer balance:", buyerFetchError);
+      console.error("Error fetching buyer profile:", buyerFetchError);
       return res.status(500).json({ error: buyerFetchError.message });
+    }
+
+    if (!buyerData) {
+      return res.status(404).json({ error: "Buyer profile not found" });
+    }
+
+    // 5. Verify MPIN
+    if (!buyerData.mpin) {
+      return res.status(400).json({ 
+        error: "MPIN not set for this user. Please contact support." 
+      });
+    }
+
+    const isMPINValid = verifyMPIN(mpin, buyerData.mpin);
+    if (!isMPINValid) {
+      return res.status(401).json({ 
+        error: "Invalid MPIN. Please check your MPIN and try again." 
+      });
     }
 
     const buyerBalance = buyerData.balance;
@@ -937,7 +1053,7 @@ app.post("/api/buy-carbon-credit/:id", async (req, res) => {
       });
     }
 
-    // 5. Update buyer balance (subtract amount)
+    // 6. Update buyer balance (subtract amount)
     const { error: buyerError } = await supabase
       .from("profiles")
       .update({ balance: buyerBalance - amount })
@@ -948,7 +1064,7 @@ app.post("/api/buy-carbon-credit/:id", async (req, res) => {
       return res.status(500).json({ error: buyerError.message });
     }
 
-    // 6. Fetch seller balance
+    // 7. Fetch seller balance
     const { data: sellerData, error: sellerFetchError } = await supabase
       .from("profiles")
       .select("balance")
@@ -962,7 +1078,7 @@ app.post("/api/buy-carbon-credit/:id", async (req, res) => {
 
     const sellerBalance = sellerData.balance;
 
-    // 7. Update seller balance (add amount)
+    // 8. Update seller balance (add amount)
     const { error: sellerError } = await supabase
       .from("profiles")
       .update({ balance: sellerBalance + amount })
@@ -973,7 +1089,7 @@ app.post("/api/buy-carbon-credit/:id", async (req, res) => {
       return res.status(500).json({ error: sellerError.message });
     }
 
-    // 8. Update carbon credit quantity or mark as sold
+    // 9. Update carbon credit quantity or mark as sold
     const remainingQuantity = creditData.quantity - requested_quantity;
     let updateData;
 
@@ -995,7 +1111,7 @@ app.post("/api/buy-carbon-credit/:id", async (req, res) => {
       return res.status(500).json({ error: creditUpdateError.message });
     }
 
-    // 9. Record transaction
+    // 10. Record transaction
     const { error: transactionError } = await supabase
       .from("transactions")
       .insert({
@@ -1012,7 +1128,7 @@ app.post("/api/buy-carbon-credit/:id", async (req, res) => {
       return res.status(500).json({ error: transactionError.message });
     }
 
-    // 10. Create notifications for buyer and seller
+    // 11. Create notifications for buyer and seller
     const statusText = remainingQuantity === 0 ? "completely sold" : "partially sold";
     
     // Notification for buyer
@@ -1074,58 +1190,6 @@ app.get("/api/transactions/:id", async (req, res) => {
   }
 });
 
-app.post("/api/support-request", async (req, res) => {
-  try {
-    const { user_id, subject, message, status } = req.body;
-    const { error } = await supabase.from("support_requests").insert({
-      user_id,
-      subject,
-      message,
-      status,
-      created_at: new Date(),
-    });
-    if (error) {
-      console.error("Error creating support request:", error);
-      return res.status(500).json({ error: error.message });
-    }
-    return res
-      .status(201)
-      .json({ message: "Support request created successfully" });
-  } catch (error) {
-    console.error("Error creating support request:", error);
-    return res.status(500).json({ error: error.message });
-  }
-});
-
-app.get("/api/support-requests", async (req, res) => {
-  try {
-    const { data, error } = await supabase.from("support_requests").select("*");
-    if (error) {
-      throw error;
-    }
-    return res.status(200).json({ support_requests: data });
-  } catch (error) {
-    console.error("Error fetching support requests:", error);
-    return res.status(500).json({ error: error.message });
-  }
-});
-
-app.get("/api/support-requests/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { data, error } = await supabase
-      .from("support_requests")
-      .select("*")
-      .eq("id", id);
-    if (error) {
-      throw error;
-    }
-    return res.status(200).json({ support_request: data });
-  } catch (error) {
-    console.error("Error fetching support request:", error);
-    return res.status(500).json({ error: error.message });
-  }
-});
 
 app.get("/api/dashboard-activity", async (req, res) => {
   try {
