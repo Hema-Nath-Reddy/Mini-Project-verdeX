@@ -128,16 +128,495 @@ app.post("/api/logout", async (req, res) => {
 app.post("/api/resend-email", async (req, res) => {
   try {
     const { email } = req.body;
-    const { data, error } = await supabase.auth.resend({
+    
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    // Resend email confirmation for signup
+    const { data, error } = await supabase.auth.resendOtp({
       type: "signup",
-      email,
+      email: email,
       options: {
         emailRedirectTo: "http://localhost:5173/login",
       },
     });
-    if (error) return res.status(400).json({ error: error.message });
-    return res.json({ ok: true, data });
+
+    if (error) {
+      console.error("Resend email error:", error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.status(200).json({ 
+      message: "Confirmation email sent successfully",
+      data 
+    });
   } catch (error) {
+    console.error("Resend email error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    // Send password reset email
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: "http://localhost:5173/reset-password",
+    });
+
+    if (error) {
+      console.error("Forgot password error:", error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.status(200).json({ 
+      message: "Password reset email sent successfully. Please check your email for reset instructions.",
+      data 
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/reset-password", async (req, res) => {
+  try {
+    const { access_token, refresh_token, new_password } = req.body;
+    
+    if (!access_token || !refresh_token || !new_password) {
+      return res.status(400).json({ 
+        error: "Access token, refresh token, and new password are required" 
+      });
+    }
+
+    // Set the session with the provided tokens
+    const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+      access_token,
+      refresh_token,
+    });
+
+    if (sessionError) {
+      console.error("Session error:", sessionError);
+      return res.status(400).json({ error: "Invalid or expired reset link" });
+    }
+
+    // Update the password
+    const { data, error } = await supabase.auth.updateUser({
+      password: new_password
+    });
+
+    if (error) {
+      console.error("Password update error:", error);
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.status(200).json({ 
+      message: "Password updated successfully. You can now log in with your new password.",
+      data 
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Get user profile
+app.get("/api/profile", async (req, res) => {
+  try {
+    // Get the current user from the session
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return res.status(401).json({ error: "Unauthorized. Please log in." });
+    }
+
+    // Fetch user profile from profiles table
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
+      return res.status(500).json({ error: "Failed to fetch profile" });
+    }
+
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    // Return profile data (excluding sensitive fields if needed)
+    return res.status(200).json({
+      profile: {
+        id: profile.id,
+        name: profile.name,
+        phone: profile.phone,
+        balance: profile.balance,
+        role: profile.role,
+        created_at: profile.created_at,
+        updated_at: profile.updated_at
+      }
+    });
+  } catch (error) {
+    console.error("Get profile error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Update user profile
+app.put("/api/profile", async (req, res) => {
+  try {
+    // Get the current user from the session
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return res.status(401).json({ error: "Unauthorized. Please log in." });
+    }
+
+    const { name, phone } = req.body;
+
+    // Validate input - role cannot be modified by users
+    if (!name && !phone) {
+      return res.status(400).json({ 
+        error: "At least one field (name, phone) must be provided for update" 
+      });
+    }
+
+    // Prepare update data (excluding role and balance)
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (phone !== undefined) updateData.phone = phone;
+    updateData.updated_at = new Date();
+
+    // Update profile in database
+    const { data: updatedProfile, error: updateError } = await supabase
+      .from("profiles")
+      .update(updateData)
+      .eq("id", user.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error("Error updating profile:", updateError);
+      return res.status(500).json({ error: "Failed to update profile" });
+    }
+
+    if (!updatedProfile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      profile: {
+        id: updatedProfile.id,
+        name: updatedProfile.name,
+        phone: updatedProfile.phone,
+        balance: updatedProfile.balance,
+        role: updatedProfile.role,
+        created_at: updatedProfile.created_at,
+        updated_at: updatedProfile.updated_at
+      }
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Get profile by ID (for admin or public profile viewing)
+app.get("/api/profile/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ error: "Profile ID is required" });
+    }
+
+    // Fetch profile from database
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, name, phone, role, created_at")
+      .eq("id", id)
+      .single();
+
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
+      return res.status(500).json({ error: "Failed to fetch profile" });
+    }
+
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    return res.status(200).json({
+      profile: {
+        id: profile.id,
+        name: profile.name,
+        phone: profile.phone,
+        role: profile.role,
+        created_at: profile.created_at
+      }
+    });
+  } catch (error) {
+    console.error("Get profile by ID error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Add balance to user profile
+app.post("/api/profile/add-balance", async (req, res) => {
+  try {
+    // Get the current user from the session
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return res.status(401).json({ error: "Unauthorized. Please log in." });
+    }
+
+    const { amount } = req.body;
+
+    // Validate input
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ 
+        error: "Valid amount (greater than 0) is required" 
+      });
+    }
+
+    // Check if amount is within reasonable limits (optional security measure)
+    if (amount > 10000) {
+      return res.status(400).json({ 
+        error: "Amount cannot exceed $10,000 per transaction" 
+      });
+    }
+
+    // Get current balance
+    const { data: currentProfile, error: fetchError } = await supabase
+      .from("profiles")
+      .select("balance")
+      .eq("id", user.id)
+      .single();
+
+    if (fetchError) {
+      console.error("Error fetching current balance:", fetchError);
+      return res.status(500).json({ error: "Failed to fetch current balance" });
+    }
+
+    if (!currentProfile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const newBalance = currentProfile.balance + amount;
+
+    // Update balance in database
+    const { data: updatedProfile, error: updateError } = await supabase
+      .from("profiles")
+      .update({ 
+        balance: newBalance,
+        updated_at: new Date()
+      })
+      .eq("id", user.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error("Error updating balance:", updateError);
+      return res.status(500).json({ error: "Failed to update balance" });
+    }
+
+    // Create notification for balance addition
+    await createNotification(
+      user.id,
+      "Balance Added",
+      `Your account has been credited with $${amount}. New balance: $${newBalance}`,
+      "unread"
+    );
+
+    return res.status(200).json({
+      message: "Balance added successfully",
+      previous_balance: currentProfile.balance,
+      amount_added: amount,
+      new_balance: newBalance,
+      profile: {
+        id: updatedProfile.id,
+        name: updatedProfile.name,
+        phone: updatedProfile.phone,
+        balance: updatedProfile.balance,
+        role: updatedProfile.role,
+        created_at: updatedProfile.created_at,
+        updated_at: updatedProfile.updated_at
+      }
+    });
+  } catch (error) {
+    console.error("Add balance error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Helper function to create notifications
+async function createNotification(user_id, subject, message, status = 'unread') {
+  try {
+    const { error } = await supabase
+      .from("notifications")
+      .insert({
+        user_id,
+        subject,
+        message,
+        status,
+        created_at: new Date()
+      });
+
+    if (error) {
+      console.error("Error creating notification:", error);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error creating notification:", error);
+    return false;
+  }
+}
+
+// Get user notifications
+app.get("/api/notifications", async (req, res) => {
+  try {
+    // Get the current user from the session
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return res.status(401).json({ error: "Unauthorized. Please log in." });
+    }
+
+    // Get query parameters for filtering
+    const { status, limit = 50, offset = 0 } = req.query;
+
+    // Build query
+    let query = supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    // Add status filter if provided
+    if (status) {
+      query = query.eq("status", status);
+    }
+
+    const { data: notifications, error: notificationsError } = await query;
+
+    if (notificationsError) {
+      console.error("Error fetching notifications:", notificationsError);
+      return res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+
+    return res.status(200).json({
+      notifications: notifications || [],
+      total: notifications?.length || 0
+    });
+  } catch (error) {
+    console.error("Get notifications error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Mark notification as read
+app.put("/api/notifications/:id/read", async (req, res) => {
+  try {
+    // Get the current user from the session
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return res.status(401).json({ error: "Unauthorized. Please log in." });
+    }
+
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ error: "Notification ID is required" });
+    }
+
+    // Update notification status to read
+    const { data: updatedNotification, error: updateError } = await supabase
+      .from("notifications")
+      .update({ status: "read" })
+      .eq("id", id)
+      .eq("user_id", user.id) // Ensure user can only update their own notifications
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error("Error updating notification:", updateError);
+      return res.status(500).json({ error: "Failed to update notification" });
+    }
+
+    if (!updatedNotification) {
+      return res.status(404).json({ error: "Notification not found or unauthorized" });
+    }
+
+    return res.status(200).json({
+      message: "Notification marked as read",
+      notification: updatedNotification
+    });
+  } catch (error) {
+    console.error("Mark notification as read error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Mark all notifications as read
+app.put("/api/notifications/read-all", async (req, res) => {
+  try {
+    // Get the current user from the session
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return res.status(401).json({ error: "Unauthorized. Please log in." });
+    }
+
+    // Update all user's unread notifications to read
+    const { data: updatedNotifications, error: updateError } = await supabase
+      .from("notifications")
+      .update({ status: "read" })
+      .eq("user_id", user.id)
+      .eq("status", "unread")
+      .select();
+
+    if (updateError) {
+      console.error("Error updating notifications:", updateError);
+      return res.status(500).json({ error: "Failed to update notifications" });
+    }
+
+    return res.status(200).json({
+      message: "All notifications marked as read",
+      updated_count: updatedNotifications?.length || 0
+    });
+  } catch (error) {
+    console.error("Mark all notifications as read error:", error);
     return res.status(500).json({ error: error.message });
   }
 });
@@ -184,7 +663,7 @@ app.post("/api/create-carbon-credit", upload.any(), async (req, res) => {
       location,
     } = req.body;
 
-    const { error } = await supabase.from("carbon_credits").insert({
+    const { data: insertedCredit, error } = await supabase.from("carbon_credits").insert({
       seller_id,
       price,
       price_per_credit,
@@ -197,16 +676,32 @@ app.post("/api/create-carbon-credit", upload.any(), async (req, res) => {
       name,
       description,
       location,
-    });
+    }).select().single();
 
     if (error) {
       console.error("Error inserting carbon credits:", error);
       return res.status(500).json({ error: error.message });
     }
 
+    // Create notification for the seller
+    await createNotification(
+      seller_id,
+      "Carbon Credit Submitted for Approval",
+      `Your carbon credit "${name}" (${quantity} credits) has been submitted for approval and is pending review.`,
+      "unread"
+    );
+
+    // Create notification for admin users (assuming admin role exists)
+    // Note: You might want to fetch admin users and send notifications to them
+    // For now, we'll just log that admin notification should be sent
+    console.log(`Carbon credit "${name}" submitted for approval by seller ${seller_id}`);
+
     return res
       .status(201)
-      .json({ message: "Carbon credits created successfully" });
+      .json({ 
+        message: "Carbon credits created successfully and submitted for approval",
+        carbon_credit: insertedCredit
+      });
   } catch (error) {
     console.error("Error creating carbon credits:", error);
     return res.status(500).json({ error: error.message });
@@ -251,20 +746,41 @@ app.get("/api/carbon-credit/:id", async (req, res) => {
 app.post("/api/buy-carbon-credit/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { buyer_id, seller_id, quantity, amount } = req.body;
+    const { buyer_id, requested_quantity } = req.body;
 
-    // 1. Mark carbon credit as sold
-    const { error: creditError } = await supabase
-      .from("carbon_credits")
-      .update({ status: "sold" })
-      .eq("id", id);
-
-    if (creditError) {
-      console.error("Error updating carbon credit:", creditError);
-      return res.status(500).json({ error: creditError.message });
+    // Validate input
+    if (!buyer_id || !requested_quantity || requested_quantity <= 0) {
+      return res.status(400).json({ 
+        error: "Buyer ID and valid quantity are required" 
+      });
     }
 
-    // 2. Fetch buyer balance
+    // 1. Fetch carbon credit details
+    const { data: creditData, error: creditFetchError } = await supabase
+      .from("carbon_credits")
+      .select("*")
+      .eq("id", id)
+      .eq("status", "available")
+      .single();
+
+    if (creditFetchError || !creditData) {
+      console.error("Error fetching carbon credit:", creditFetchError);
+      return res.status(404).json({ 
+        error: "Carbon credit not found or not available" 
+      });
+    }
+
+    // 2. Validate requested quantity against available quantity
+    if (requested_quantity > creditData.quantity) {
+      return res.status(400).json({ 
+        error: `Requested quantity (${requested_quantity}) exceeds available quantity (${creditData.quantity})` 
+      });
+    }
+
+    // 3. Calculate amount based on price per credit
+    const amount = requested_quantity * creditData.price_per_credit;
+
+    // 4. Fetch buyer balance
     const { data: buyerData, error: buyerFetchError } = await supabase
       .from("profiles")
       .select("balance")
@@ -279,10 +795,12 @@ app.post("/api/buy-carbon-credit/:id", async (req, res) => {
     const buyerBalance = buyerData.balance;
 
     if (buyerBalance < amount) {
-      return res.status(400).json({ error: "Buyer has insufficient funds" });
+      return res.status(400).json({ 
+        error: `Insufficient funds. Required: ${amount}, Available: ${buyerBalance}` 
+      });
     }
 
-    // 3. Update buyer balance (subtract amount)
+    // 5. Update buyer balance (subtract amount)
     const { error: buyerError } = await supabase
       .from("profiles")
       .update({ balance: buyerBalance - amount })
@@ -293,11 +811,11 @@ app.post("/api/buy-carbon-credit/:id", async (req, res) => {
       return res.status(500).json({ error: buyerError.message });
     }
 
-    // 4. Fetch seller balance
+    // 6. Fetch seller balance
     const { data: sellerData, error: sellerFetchError } = await supabase
       .from("profiles")
       .select("balance")
-      .eq("id", seller_id)
+      .eq("id", creditData.seller_id)
       .single();
 
     if (sellerFetchError) {
@@ -307,26 +825,47 @@ app.post("/api/buy-carbon-credit/:id", async (req, res) => {
 
     const sellerBalance = sellerData.balance;
 
-    // 5. Update seller balance (add amount)
+    // 7. Update seller balance (add amount)
     const { error: sellerError } = await supabase
       .from("profiles")
       .update({ balance: sellerBalance + amount })
-      .eq("id", seller_id)
-      .select();
+      .eq("id", creditData.seller_id);
 
     if (sellerError) {
       console.error("Error updating seller balance:", sellerError);
       return res.status(500).json({ error: sellerError.message });
     }
 
-    // 6. Record transaction
+    // 8. Update carbon credit quantity or mark as sold
+    const remainingQuantity = creditData.quantity - requested_quantity;
+    let updateData;
+
+    if (remainingQuantity === 0) {
+      // All credits sold, mark as sold
+      updateData = { status: "sold", quantity: 0 };
+    } else {
+      // Partial purchase, update quantity
+      updateData = { quantity: remainingQuantity };
+    }
+
+    const { error: creditUpdateError } = await supabase
+      .from("carbon_credits")
+      .update(updateData)
+      .eq("id", id);
+
+    if (creditUpdateError) {
+      console.error("Error updating carbon credit:", creditUpdateError);
+      return res.status(500).json({ error: creditUpdateError.message });
+    }
+
+    // 9. Record transaction
     const { error: transactionError } = await supabase
       .from("transactions")
       .insert({
         buyer_id,
-        seller_id,
+        seller_id: creditData.seller_id,
         credit_id: id,
-        quantity,
+        quantity: requested_quantity,
         amount: amount,
         transaction_date: new Date(),
       });
@@ -336,7 +875,32 @@ app.post("/api/buy-carbon-credit/:id", async (req, res) => {
       return res.status(500).json({ error: transactionError.message });
     }
 
-    return res.status(200).json({ message: "Transaction successful" });
+    // 10. Create notifications for buyer and seller
+    const statusText = remainingQuantity === 0 ? "completely sold" : "partially sold";
+    
+    // Notification for buyer
+    await createNotification(
+      buyer_id,
+      "Carbon Credit Purchase Successful",
+      `You have successfully purchased ${requested_quantity} carbon credits from "${creditData.name}" for $${amount}.`,
+      "unread"
+    );
+
+    // Notification for seller
+    await createNotification(
+      creditData.seller_id,
+      "Carbon Credit Sale Notification",
+      `Your carbon credit "${creditData.name}" has been ${statusText}. ${requested_quantity} credits were purchased for $${amount}. ${remainingQuantity > 0 ? `${remainingQuantity} credits remain available.` : 'All credits have been sold.'}`,
+      "unread"
+    );
+
+    return res.status(200).json({ 
+      message: "Transaction successful",
+      purchased_quantity: requested_quantity,
+      amount_paid: amount,
+      remaining_credits: remainingQuantity,
+      credit_status: remainingQuantity === 0 ? "sold" : "available"
+    });
   } catch (error) {
     console.error("Error buying carbon credit:", error);
     return res.status(500).json({ error: error.message });
@@ -579,14 +1143,48 @@ app.get("/api/dashboard-approvals", async (req, res) => {
 app.post("/api/approve-project/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // First, get the carbon credit details to find the seller
+    const { data: creditData, error: fetchError } = await supabase
+      .from("carbon_credits")
+      .select("seller_id, name, quantity, status")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !creditData) {
+      console.error("Error fetching carbon credit:", fetchError);
+      return res.status(404).json({ error: "Carbon credit not found" });
+    }
+
+    if (creditData.status !== "pending") {
+      return res.status(400).json({ error: "Carbon credit is not pending approval" });
+    }
+
+    // Update the carbon credit status
     const { data, error } = await supabase
       .from("carbon_credits")
       .update({ status: "available" })
-      .eq("id", id);
+      .eq("id", id)
+      .select()
+      .single();
+
     if (error) {
-      throw error;
+      console.error("Error updating carbon credit:", error);
+      return res.status(500).json({ error: error.message });
     }
-    return res.status(200).json({ message: "Project has been approved" });
+
+    // Create notification for the seller
+    await createNotification(
+      creditData.seller_id,
+      "Carbon Credit Approved",
+      `Your carbon credit "${creditData.name}" (${creditData.quantity} credits) has been approved and is now available for purchase.`,
+      "unread"
+    );
+
+    return res.status(200).json({ 
+      message: "Project has been approved",
+      carbon_credit: data
+    });
   } catch (error) {
     console.error("Error approving project:", error);
     return res.status(500).json({ error: error.message });
