@@ -606,6 +606,44 @@ async function createNotification(user_id, subject, message, status = 'unread') 
   }
 }
 
+// Helper function to ensure storage bucket exists
+async function ensureBucketExists(bucketName) {
+  try {
+    // Check if bucket exists
+    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+    
+    if (listError) {
+      console.error("Error listing buckets:", listError);
+      return false;
+    }
+
+    const bucketExists = buckets.some(bucket => bucket.name === bucketName);
+    
+    if (!bucketExists) {
+      console.log(`Bucket '${bucketName}' does not exist. Creating...`);
+      
+      // Create bucket
+      const { data, error: createError } = await supabase.storage.createBucket(bucketName, {
+        public: false, // Private bucket for security
+        allowedMimeTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'],
+        fileSizeLimit: 52428800 // 50MB limit
+      });
+
+      if (createError) {
+        console.error("Error creating bucket:", createError);
+        return false;
+      }
+
+      console.log(`Bucket '${bucketName}' created successfully`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error ensuring bucket exists:", error);
+    return false;
+  }
+}
+
 // Get user notifications
 app.get("/api/notifications", async (req, res) => {
   try {
@@ -742,26 +780,41 @@ app.post("/api/create-carbon-credit", upload.any(), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
+    // Ensure the storage bucket exists
+    const bucketExists = await ensureBucketExists("carbon-credits");
+    if (!bucketExists) {
+      return res.status(500).json({ 
+        error: "Failed to create or access storage bucket. Please contact support." 
+      });
+    }
+
     const file = req.files[0];
     const ext = path.extname(file.originalname);
 
     const filename = `${Date.now()}${ext}`;
 
     const { error: uploadError } = await supabase.storage
-      .from("Projects")
+      .from("carbon-credits")
       .upload(filename, file.buffer, {
         contentType: file.mimetype,
       });
 
     if (uploadError) {
+      console.error("Storage upload error:", uploadError);
       return res.status(500).json({ error: uploadError.message });
     }
 
-    const { data: publicUrlData } = supabase.storage
-      .from("Projects")
-      .getPublicUrl(filename);
+    // Generate signed URL for private access (valid for 1 hour)
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+      .from("carbon-credits")
+      .createSignedUrl(filename, 3600); // 1 hour expiry
 
-    const verification_document_url = publicUrlData.publicUrl;
+    if (signedUrlError) {
+      console.error("Error creating signed URL:", signedUrlError);
+      return res.status(500).json({ error: "Failed to generate document URL" });
+    }
+
+    const verification_document_url = signedUrlData.signedUrl;
 
     const {
       seller_id,
@@ -964,9 +1017,118 @@ app.get("/api/carbon-credit/:id", async (req, res) => {
     if (error) {
       throw error;
     }
+
+    // Generate fresh signed URL for the verification document
+    if (data.verification_document_url) {
+      // Extract filename from the stored URL
+      const urlParts = data.verification_document_url.split('/');
+      const filename = urlParts[urlParts.length - 1];
+      
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        .from("carbon-credits")
+        .createSignedUrl(filename, 3600); // 1 hour expiry
+
+      if (!signedUrlError && signedUrlData) {
+        data.verification_document_url = signedUrlData.signedUrl;
+      }
+    }
+
     return res.status(200).json({ carbon_credit: data });
   } catch (error) {
     console.error("Error fetching carbon credit:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Get fresh signed URL for verification document
+app.get("/api/carbon-credit/:id/document", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { expires_in = 3600 } = req.query; // Allow custom expiry time
+    
+    // Get carbon credit details
+    const { data: creditData, error: fetchError } = await supabase
+      .from("carbon_credits")
+      .select("verification_document_url")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !creditData) {
+      return res.status(404).json({ error: "Carbon credit not found" });
+    }
+
+    if (!creditData.verification_document_url) {
+      return res.status(404).json({ error: "No verification document found" });
+    }
+
+    // Extract filename from the stored URL
+    const urlParts = creditData.verification_document_url.split('/');
+    const filename = urlParts[urlParts.length - 1];
+    
+    // Generate fresh signed URL with custom expiry
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+      .from("carbon-credits")
+      .createSignedUrl(filename, parseInt(expires_in)); // Custom expiry time
+
+    if (signedUrlError) {
+      console.error("Error creating signed URL:", signedUrlError);
+      return res.status(500).json({ error: "Failed to generate document URL" });
+    }
+
+    return res.status(200).json({ 
+      document_url: signedUrlData.signedUrl,
+      expires_in: parseInt(expires_in),
+      expires_at: new Date(Date.now() + parseInt(expires_in) * 1000).toISOString()
+    });
+  } catch (error) {
+    console.error("Error generating document URL:", error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// Check if document URL is expired and refresh if needed
+app.post("/api/carbon-credit/:id/refresh-document", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { current_url } = req.body;
+    
+    // Get carbon credit details
+    const { data: creditData, error: fetchError } = await supabase
+      .from("carbon_credits")
+      .select("verification_document_url")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !creditData) {
+      return res.status(404).json({ error: "Carbon credit not found" });
+    }
+
+    if (!creditData.verification_document_url) {
+      return res.status(404).json({ error: "No verification document found" });
+    }
+
+    // Extract filename from the stored URL
+    const urlParts = creditData.verification_document_url.split('/');
+    const filename = urlParts[urlParts.length - 1];
+    
+    // Generate fresh signed URL
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+      .from("carbon-credits")
+      .createSignedUrl(filename, 3600); // 1 hour expiry
+
+    if (signedUrlError) {
+      console.error("Error creating signed URL:", signedUrlError);
+      return res.status(500).json({ error: "Failed to generate document URL" });
+    }
+
+    return res.status(200).json({ 
+      document_url: signedUrlData.signedUrl,
+      expires_in: 3600,
+      expires_at: new Date(Date.now() + 3600 * 1000).toISOString(),
+      refreshed: true
+    });
+  } catch (error) {
+    console.error("Error refreshing document URL:", error);
     return res.status(500).json({ error: error.message });
   }
 });
