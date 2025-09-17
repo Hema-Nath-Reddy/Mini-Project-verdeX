@@ -55,10 +55,31 @@ function decryptMPIN(encryptedMPIN) {
   }
 }
 
-function verifyMPIN(inputMPIN, encryptedMPIN) {
+function encryptMPINWithIV(mpin, ivHex) {
   try {
-    const decryptedMPIN = decryptMPIN(encryptedMPIN);
-    return decryptedMPIN === inputMPIN;
+    const iv = Buffer.from(ivHex, 'hex');
+    const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY, 'hex'), iv);
+    let encrypted = cipher.update(mpin, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return encrypted; // ciphertext only
+  } catch (error) {
+    console.error('Error encrypting MPIN with IV:', error);
+    return null;
+  }
+}
+
+function verifyMPIN(inputMPIN, storedEncryptedMPIN) {
+  try {
+    if (!storedEncryptedMPIN || typeof storedEncryptedMPIN !== 'string' || !storedEncryptedMPIN.includes(':')) {
+      return false;
+    }
+    const parts = storedEncryptedMPIN.split(':');
+    const ivHex = parts[0];
+    const storedCipherHex = parts.slice(1).join(':');
+    const recomputedCipherHex = encryptMPINWithIV(String(inputMPIN), ivHex);
+    if (!recomputedCipherHex) return false;
+    // constant-time compare
+    return crypto.timingSafeEqual(Buffer.from(recomputedCipherHex, 'hex'), Buffer.from(storedCipherHex, 'hex'));
   } catch (error) {
     console.error('Error verifying MPIN:', error);
     return false;
