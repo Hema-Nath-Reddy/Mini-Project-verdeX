@@ -135,7 +135,7 @@ const ListCredits = () => {
           />
           <label
             htmlFor="quantity"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
           >
             Quantity
           </label>
@@ -154,7 +154,7 @@ const ListCredits = () => {
           />
           <label
             htmlFor="pricePerCredit"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
           >
             Price Per Credit (₹)
           </label>
@@ -194,7 +194,7 @@ const ListCredits = () => {
           />
           <label
             htmlFor="price"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1"
+            className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1"
           >
             Total Price (₹)
           </label>
@@ -211,7 +211,7 @@ const ListCredits = () => {
           />
           <label
             htmlFor="description"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
           >
             Description
           </label>
@@ -229,7 +229,7 @@ const ListCredits = () => {
           />
           <label
             htmlFor="name"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
           >
             Project Name
           </label>
@@ -247,7 +247,7 @@ const ListCredits = () => {
           />
           <label
             htmlFor="location"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
           >
             Location
           </label>
@@ -264,7 +264,7 @@ const ListCredits = () => {
           />
           <label
             htmlFor="issueDate"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
           >
             Issue Date
           </label>
@@ -281,7 +281,7 @@ const ListCredits = () => {
           />
           <label
             htmlFor="expiryDate"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
           >
             Expiry Date
           </label>
@@ -319,17 +319,24 @@ const ListCredits = () => {
         </div>
 
         <div className="md:col-span-2">
-          <button
-            type="submit"
-            disabled={loading}
-            className={
-              loading
-                ? "w-full h-10 mt-2 mb-5 bg-[#00000025] border border-[#098409] text-black rounded-lg cursor-not-allowed"
-                : "w-full h-10 mt-2 mb-5 bg-[#00000025] border border-[#098409] text-black hover:bg-[#a7f7a7bb] rounded-lg hover:text-[#098409] font-bold cursor-pointer transition-all duration-300"
-            }
-          >
-            {loading ? "Listing..." : "LIST CREDITS"}
-          </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className={
+                loading
+                  ? "w-full h-10 mt-2 mb-5 bg-gray-300 border border-gray-400 text-gray-600 rounded-lg cursor-not-allowed transition-all duration-300"
+                  : "w-full h-10 mt-2 mb-5 bg-[#00000025] border border-[#098409] text-black hover:bg-[#a7f7a7bb] rounded-lg hover:text-[#098409] font-bold cursor-pointer transition-all duration-300"
+              }
+            >
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                  Listing...
+                </div>
+              ) : (
+                "LIST CREDITS"
+              )}
+            </button>
         </div>
       </form>
 

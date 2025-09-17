@@ -40,7 +40,7 @@ const Overview = (props) => {
         const response = await fetch("http://localhost:3001/api/transactions");
         if (response.ok) {
           const result = await response.json();
-          const recentTransactions = (result.transactions || []).slice(0, 5).map(transaction => ({
+          const recentTransactions = (result.transactions || []).slice(0, 3).map(transaction => ({
             date: new Date(transaction.transaction_date).toLocaleDateString(),
             type: "Purchase",
             amount: `${transaction.quantity} Credits`,
@@ -66,18 +66,6 @@ const Overview = (props) => {
               date: "2023-08-05",
               type: "Purchase",
               amount: "20 Credits",
-              status: "Completed",
-            },
-            {
-              date: "2023-07-28",
-              type: "Sale",
-              amount: "40 Credits",
-              status: "Completed",
-            },
-            {
-              date: "2023-07-20",
-              type: "Purchase",
-              amount: "10 Credits",
               status: "Completed",
             },
           ]);
@@ -109,18 +97,6 @@ const Overview = (props) => {
             date: "2023-08-05",
             type: "Purchase",
             amount: "20 Credits",
-            status: "Completed",
-          },
-          {
-            date: "2023-07-28",
-            type: "Sale",
-            amount: "40 Credits",
-            status: "Completed",
-          },
-          {
-            date: "2023-07-20",
-            type: "Purchase",
-            amount: "10 Credits",
             status: "Completed",
           },
         ]);
@@ -233,7 +209,7 @@ const Overview = (props) => {
           <div className="flex items-center gap-2 mt-4">
             <input
               type="number"
-              value={topupAmount}
+              value={topupAmount==0? "": topupAmount}
               onChange={(e) => setTopupAmount(e.target.value)}
               placeholder="Add amount"
               className="w-40 h-8 border border-gray-300 rounded-md px-2 text-sm"
@@ -292,23 +268,40 @@ const Overview = (props) => {
               </tr>
             </thead>
             <tbody>
-              {transactions.map((row, index) => (
-                <tr
-                  key={index}
-                  className="border-b border-gray-100 hover:bg-gray-50"
-                >
-                  <td className="py-5 px-6 text-gray-700">{row.date}</td>
-                  <td className="py-5 px-6 text-green-700 font-medium">
-                    {row.type}
-                  </td>
-                  <td className="py-5 px-6 text-gray-700">{row.amount}</td>
-                  <td className="py-5 px-6">
-                    <span className="bg-gray-100 text-gray-800 text-xs font-semibold px-3 py-1.5 rounded-full">
-                      {row.status}
-                    </span>
+              {loading ? (
+                <tr>
+                  <td colSpan="4" className="py-12 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#098409] mb-4"></div>
+                      <p className="text-gray-500">Loading recent transactions...</p>
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : transactions.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="py-12 text-center text-gray-500">
+                    No recent transactions found
+                  </td>
+                </tr>
+              ) : (
+                transactions.map((row, index) => (
+                  <tr
+                    key={index}
+                    className="border-b border-gray-100 hover:bg-gray-50"
+                  >
+                    <td className="py-5 px-6 text-gray-700">{row.date}</td>
+                    <td className="py-5 px-6 text-green-700 font-medium">
+                      {row.type}
+                    </td>
+                    <td className="py-5 px-6 text-gray-700">{row.amount}</td>
+                    <td className="py-5 px-6">
+                      <span className="bg-gray-100 text-gray-800 text-xs font-semibold px-3 py-1.5 rounded-full">
+                        {row.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -338,7 +331,7 @@ const Overview = (props) => {
                 onChange={(e) => setTopupAmount(e.target.value)}
                 min={1}
               />
-              <label className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]">Amount</label>
+              <label className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]">Amount</label>
             </div>
             <div className="relative">
               <input
@@ -350,7 +343,7 @@ const Overview = (props) => {
                 onChange={(e) => setMpinTopup(e.target.value)}
                 maxLength={6}
               />
-              <label htmlFor="topup_mpin" className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]">MPIN (4-6 digits)</label>
+              <label htmlFor="topup_mpin" className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]">MPIN (4-6 digits)</label>
               {!showTopupMpin ? (
                 <EyeClosed onClick={() => setShowTopupMpin(true)} className="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-600" />
               ) : (

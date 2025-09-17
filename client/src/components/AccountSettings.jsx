@@ -64,7 +64,7 @@ const AccountSettings = () => {
             onChange={(e) => setName(e.target.value)}
             required
           />
-          <label htmlFor="name" className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1">Full Name</label>
+          <label htmlFor="name" className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1">Full Name</label>
         </div>
         <div className="relative w-full mt-4">
           <input
@@ -76,7 +76,7 @@ const AccountSettings = () => {
             onChange={(e) => setPhone(e.target.value)}
             required
           />
-          <label htmlFor="phone" className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1">Phone Number</label>
+          <label htmlFor="phone" className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1">Phone Number</label>
         </div>
         <div className="relative w-full mt-4">
           <input
@@ -90,7 +90,7 @@ const AccountSettings = () => {
             inputMode="numeric"
             pattern="\d{4,6}"
           />
-          <label htmlFor="mpin" className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]">Update MPIN (optional)</label>
+          <label htmlFor="mpin" className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]">Update MPIN (optional)</label>
           {!showMpin ? (
             <EyeClosed onClick={() => setShowMpin(true)} className="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-600" />
           ) : (
@@ -109,7 +109,7 @@ const AccountSettings = () => {
             inputMode="numeric"
             pattern="\d{4,6}"
           />
-          <label htmlFor="confirm_mpin" className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]">Confirm MPIN</label>
+          <label htmlFor="confirm_mpin" className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]">Confirm MPIN</label>
           {!showConfirmMpin ? (
             <EyeClosed onClick={() => setShowConfirmMpin(true)} className="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-600" />
           ) : (

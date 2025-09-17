@@ -21,6 +21,7 @@ const MarketPlace = (props) => {
   const [buyQty, setBuyQty] = useState("");
   const [buyMpin, setBuyMpin] = useState("");
   const [showMpin, setShowMpin] = useState(false);
+  const [purchasing, setPurchasing] = useState(false);
 
   const { data } = props;
 
@@ -138,7 +139,10 @@ const MarketPlace = (props) => {
       toast.error(`Insufficient balance. Need ₹${totalAmount}`);
       return;
     }
-    // Validate required data
+
+    setPurchasing(true);
+    const loadingToast = toast.loading("Processing purchase...");
+
     try {
       const response = await fetch(`http://localhost:3001/api/buy-carbon-credit/${selectedCredit.id}`, {
         method: "POST",
@@ -152,24 +156,31 @@ const MarketPlace = (props) => {
         }),
       });
 
+      const result = await response.json();
+
       if (response.ok) {
-        toast.success("Credit purchased successfully!");
+        toast.dismiss(loadingToast);
+        toast.success(`Credit purchased successfully! Remaining balance: ₹${user.balance - totalAmount}`);
+        
+        // Reset form and close modal
+        setBuyQty("");
+        setBuyMpin("");
         setModalOpen(false);
         
-        // Refresh user data to update balance
+        // Refresh user data to update balance in real-time
         await refreshUserData();
         
         // Refresh the carbon credits list
         const updatedResponse = await fetch("http://localhost:3001/api/carbon-credits");
         if (updatedResponse.ok) {
-          const result = await updatedResponse.json();
-          const formattedData = result.carbon_credits.map(credit => ({
+          const creditResult = await updatedResponse.json();
+          const formattedData = creditResult.carbon_credits.map(credit => ({
             id: credit.id,
             seller_id: credit.seller_id,
             company: credit.name || "Unknown Company",
             creditsAvailable: credit.quantity?.toString() || "0",
             pricePerCredit: `₹${credit.price_per_credit || 0}`,
-            trendValue: credit.trendValue || Math.floor(Math.random() * 101), // Use stored trend value or generate if missing
+            trendValue: credit.trendValue || Math.floor(Math.random() * 101),
             description: credit.description,
             location: credit.location,
             type: credit.type,
@@ -179,12 +190,15 @@ const MarketPlace = (props) => {
           setCarbonCredits(formattedData);
         }
       } else {
-        const errorData = await response.json();
-        toast.error(errorData.error || "Failed to purchase credit");
+        toast.dismiss(loadingToast);
+        toast.error(result.error || "Failed to purchase credit");
       }
     } catch (error) {
+      toast.dismiss(loadingToast);
       console.error("Error buying credit:", error);
       toast.error("Network error. Please try again.");
+    } finally {
+      setPurchasing(false);
     }
   };
 
@@ -200,7 +214,7 @@ const MarketPlace = (props) => {
   };
 
   return (
-    <div className="hero-container w-full mt-15">
+    <div className="hero-container w-full">
       <div className="w-250 m-auto flex flex-col justify-center items-center">
         <div className="w-full m-auto flex flex-col justify-center items-center pb-50">
           <p className="w-250 text-left text-3xl font-extrabold mt-10">
@@ -309,8 +323,24 @@ const MarketPlace = (props) => {
                     </th>
                   </tr>
                 </thead>
-                <tbody>
-                  {displayData.map((row, index) => (
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="py-12 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#098409] mb-4"></div>
+                      <p className="text-gray-500">Loading carbon credits...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : displayData.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="py-12 text-center text-gray-500">
+                    No carbon credits found
+                  </td>
+                </tr>
+              ) : (
+                displayData.map((row, index) => (
                     <tr
                       key={index}
                       className="border-b border-gray-100 hover:bg-gray-50"
@@ -350,21 +380,8 @@ const MarketPlace = (props) => {
                         )}
                       </td>
                     </tr>
-                  ))}
-                  {loading && (
-                    <tr>
-                      <td colSpan="5" className="py-8 px-6 text-center text-gray-600">
-                        Loading credits...
-                      </td>
-                    </tr>
-                  )}
-                  {!loading && displayData.length === 0 && (
-                    <tr>
-                      <td colSpan="5" className="py-8 px-6 text-center text-gray-600">
-                        No credits available at the moment. Please try again later.
-                      </td>
-                    </tr>
-                  )}
+                ))
+              )}
                 </tbody>
               </table>
             </div>
@@ -396,7 +413,7 @@ const MarketPlace = (props) => {
                   min={1}
                   max={parseInt(selectedCredit.creditsAvailable)}
                 />
-                <label className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]">Quantity</label>
+                <label className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]">Quantity</label>
               </div>
               <div className="relative">
                 <input
@@ -407,7 +424,7 @@ const MarketPlace = (props) => {
                   onChange={(e) => setBuyMpin(e.target.value)}
                   maxLength={6}
                 />
-                <label className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]">MPIN (4-6 digits)</label>
+                <label className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]">MPIN (4-6 digits)</label>
                 {!showMpin ? (
                   <EyeClosed onClick={() => setShowMpin(true)} className="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-600" />
                 ) : (
@@ -425,7 +442,13 @@ const MarketPlace = (props) => {
               </div>
               <div className="flex gap-2 mt-4">
                 <button onClick={() => setModalOpen(false)} className="flex-1 h-10 bg-gray-100 border border-gray-300 rounded-lg cursor-pointer">Cancel</button>
-                <button onClick={submitPurchase} className="flex-1 h-10 bg-[#00000025] border border-[#098409] text-black hover:bg-[#a7f7a7bb] rounded-lg hover:text-[#098409] font-bold cursor-pointer transition-all">Confirm</button>
+                <button 
+                  onClick={submitPurchase} 
+                  disabled={purchasing}
+                  className={`flex-1 h-10 ${purchasing ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#00000025] hover:bg-[#a7f7a7bb] hover:text-[#098409] cursor-pointer'} border border-[#098409] text-black rounded-lg font-bold transition-all`}
+                >
+                  {purchasing ? "Processing..." : "Confirm"}
+                </button>
               </div>
               {buyQty && parseInt(buyQty) > parseInt(selectedCredit.creditsAvailable) && (
                 <div className="text-sm text-red-600">Quantity exceeds available credits.</div>

@@ -48,7 +48,7 @@ const ResetPassword = () => {
               onChange={(e) => setNewPassword(e.target.value)}
               required
             />
-            <label htmlFor="newPassword" className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1">New Password</label>
+            <label htmlFor="newPassword" className="pointer-events-none absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1">New Password</label>
           </div>
           <button type="submit" className="w-full h-10 mt-6 bg-[#00000025] border border-[#098409] text-black hover:bg-[#a7f7a7bb] rounded-lg hover:text-[#098409] font-bold cursor-pointer transition-all duration-300">Update Password</button>
         </form>

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { Search } from "lucide-react";
 
 const TransactionHistory = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredTransactions, setFilteredTransactions] = useState([]);
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -10,7 +13,11 @@ const TransactionHistory = () => {
         const response = await fetch("http://localhost:3001/api/transactions");
         if (response.ok) {
           const result = await response.json();
-          setTransactions(result.transactions || []);
+          // Sort by transaction_date (newest first)
+          const sortedTransactions = (result.transactions || []).sort((a, b) => 
+            new Date(b.transaction_date) - new Date(a.transaction_date)
+          );
+          setTransactions(sortedTransactions);
         } else {
           console.error("Failed to fetch transactions");
           // Fallback to static data
@@ -137,8 +144,27 @@ const TransactionHistory = () => {
     };
   };
 
-  const displayTransactions = transactions.length > 0 
-    ? transactions.map(formatTransactionData)
+  // Search functionality
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredTransactions(transactions);
+    } else {
+      const filtered = transactions.filter(transaction => {
+        const formatted = formatTransactionData(transaction);
+        return (
+          formatted.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          formatted.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          formatted.amount.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          formatted.date.includes(searchTerm) ||
+          formatted.status.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      });
+      setFilteredTransactions(filtered);
+    }
+  }, [transactions, searchTerm]);
+
+  const displayTransactions = filteredTransactions.length > 0 
+    ? filteredTransactions.map(formatTransactionData)
     : [];
 
   return (
@@ -146,7 +172,20 @@ const TransactionHistory = () => {
       <p className="text-left text-3xl font-extrabold">
         Transaction<span className="text-[#098409]">&nbsp;History</span>
       </p>
-      <div className="mt-5 bg-white w-full rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      
+      {/* Search Bar */}
+      <form className="searchbar mb-4">
+        <input
+          className="w-full text-sm font-medium bg-gray-100 p-4 pl-14 rounded-xl border-0"
+          type="text"
+          placeholder="Search transactions by date, action, company, amount, or status..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <Search className="search-icon" color="gray" />
+      </form>
+      
+      <div className="mt-1 bg-white w-full rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -172,7 +211,23 @@ const TransactionHistory = () => {
               </tr>
             </thead>
             <tbody>
-              {displayTransactions.map((row, index) => (
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="py-12 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#098409] mb-4"></div>
+                      <p className="text-gray-500">Loading transactions...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : displayTransactions.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="py-12 text-center text-gray-500">
+                    {searchTerm ? "No transactions found matching your search" : "No transactions found"}
+                  </td>
+                </tr>
+              ) : (
+                displayTransactions.map((row, index) => (
                 <tr
                   key={index}
                   className="border-b border-gray-100 hover:bg-gray-50"
@@ -200,7 +255,8 @@ const TransactionHistory = () => {
                     </span>
                   </td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>

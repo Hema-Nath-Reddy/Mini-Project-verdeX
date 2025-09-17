@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { Search } from "lucide-react";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredUsers, setFilteredUsers] = useState([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -10,7 +13,11 @@ const Users = () => {
         const response = await fetch("http://localhost:3001/api/all-users");
         if (response.ok) {
           const result = await response.json();
-          setUsers(result || []);
+          // Sort by created_at (newest first)
+          const sortedUsers = (result || []).sort((a, b) => 
+            new Date(b.created_at) - new Date(a.created_at)
+          );
+          setUsers(sortedUsers);
         } else {
           console.error("Failed to fetch users");
           // Fallback to static data
@@ -106,13 +113,45 @@ const Users = () => {
     };
   };
 
-  const displayUsers = users.map(formatUserData);
+  // Search functionality
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredUsers(users);
+    } else {
+      const filtered = users.filter(user => {
+        const formatted = formatUserData(user);
+        return (
+          formatted.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          formatted.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          formatted.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          formatted.status.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      });
+      setFilteredUsers(filtered);
+    }
+  }, [users, searchTerm]);
+
+  const displayUsers = filteredUsers.map(formatUserData);
+  
   return (
     <div className="ml-80 flex flex-col w-250">
       <p className="text-left text-3xl font-extrabold">
         User<span className="text-[#098409]">s</span>
       </p>
-      <div className="mt-5 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      
+      {/* Search Bar */}
+      <form className="searchbar mb-4">
+        <input
+          className="w-full text-sm font-medium bg-gray-100 p-4 pl-14 rounded-xl border-0"
+          type="text"
+          placeholder="Search users by username, email, role, or status..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <Search className="search-icon" color="gray" />
+      </form>
+      
+      <div className="mt-1 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -135,7 +174,23 @@ const Users = () => {
               </tr>
             </thead>
             <tbody>
-              {displayUsers.map((row, index) => (
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="py-12 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#098409] mb-4"></div>
+                      <p className="text-gray-500">Loading users...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : displayUsers.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="py-12 text-center text-gray-500">
+                    {searchTerm ? "No users found matching your search" : "No users found"}
+                  </td>
+                </tr>
+              ) : (
+                displayUsers.map((row, index) => (
                 <tr
                   key={index}
                   className="border-b border-gray-100 hover:bg-gray-50"
@@ -158,7 +213,8 @@ const Users = () => {
                     </span>
                   </td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>

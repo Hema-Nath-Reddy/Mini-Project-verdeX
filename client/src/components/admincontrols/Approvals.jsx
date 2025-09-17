@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Check, X, Eye, FileText } from "lucide-react"; // Import icons
+import { Check, X, Eye, FileText, Search } from "lucide-react"; // Import icons
 import toast, { Toaster } from "react-hot-toast";
 
 const Approvals = () => {
@@ -7,6 +7,9 @@ const Approvals = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCredit, setSelectedCredit] = useState(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredApprovals, setFilteredApprovals] = useState([]);
+  const [processingIds, setProcessingIds] = useState(new Set());
 
   useEffect(() => {
     const fetchPendingApprovals = async () => {
@@ -14,7 +17,11 @@ const Approvals = () => {
         const response = await fetch("http://localhost:3001/api/dashboard-approvals");
         if (response.ok) {
           const result = await response.json();
-          setPendingApprovals(result || []);
+          // Sort by created_at (newest first)
+          const sortedApprovals = (result || []).sort((a, b) => 
+            new Date(b.created_at) - new Date(a.created_at)
+          );
+          setPendingApprovals(sortedApprovals);
         } else {
           console.error("Failed to fetch pending approvals");
           // Fallback to static data
@@ -105,6 +112,8 @@ const Approvals = () => {
   }, []);
 
   const handleApprove = async (projectId) => {
+    setProcessingIds(prev => new Set(prev).add(projectId));
+    
     try {
       const response = await fetch(`http://localhost:3001/api/approve-project/${projectId}`, {
         method: "POST",
@@ -124,6 +133,12 @@ const Approvals = () => {
     } catch (error) {
       console.error("Error approving project:", error);
       toast.error("Network error. Please try again.");
+    } finally {
+      setProcessingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(projectId);
+        return newSet;
+      });
     }
   };
 
@@ -164,12 +179,41 @@ const Approvals = () => {
     }
   };
 
+  // Search functionality
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredApprovals(pendingApprovals);
+    } else {
+      const filtered = pendingApprovals.filter(approval => 
+        approval.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        approval.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        approval.seller_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        approval.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        approval.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredApprovals(filtered);
+    }
+  }, [pendingApprovals, searchTerm]);
+
   return (
     <div className="ml-80 flex flex-col w-250">
       <p className="text-left text-3xl font-extrabold">
         App<span className="text-[#098409]">rovals</span>
       </p>
-      <div className="mt-5 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      
+      {/* Search Bar */}
+      <form className="searchbar mb-4">
+        <input
+          className="w-full text-sm font-medium bg-gray-100 p-4 pl-14 rounded-xl border-0"
+          type="text"
+          placeholder="Search approvals by name, type, seller, location..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <Search className="search-icon" color="gray" />
+      </form>
+      
+      <div className="mt-1 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -192,7 +236,23 @@ const Approvals = () => {
               </tr>
             </thead>
             <tbody>
-              {pendingApprovals.map((row, index) => (
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="py-12 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#098409] mb-4"></div>
+                      <p className="text-gray-500">Loading approvals...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredApprovals.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="py-12 text-center text-gray-500">
+                    {searchTerm ? "No approvals found matching your search" : "No pending approvals"}
+                  </td>
+                </tr>
+              ) : (
+                filteredApprovals.map((row, index) => (
                 <tr
                   key={index}
                   className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
@@ -233,10 +293,19 @@ const Approvals = () => {
                         e.stopPropagation();
                         handleApprove(row.id);
                       }}
-                      className="cursor-pointer flex items-center justify-center p-1 rounded-full text-[#098409] hover:bg-green-100 hover:text-green-700 transition-colors duration-200 focus:outline-none"
+                      disabled={processingIds.has(row.id)}
+                      className={`flex items-center justify-center p-1 rounded-full transition-colors duration-200 focus:outline-none ${
+                        processingIds.has(row.id) 
+                          ? "cursor-not-allowed text-gray-400 bg-gray-100" 
+                          : "cursor-pointer text-[#098409] hover:bg-green-100 hover:text-green-700"
+                      }`}
                       title="Approve"
                     >
-                      <Check size={20} />
+                      {processingIds.has(row.id) ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                      ) : (
+                        <Check size={20} />
+                      )}
                     </button>
                     {/* Reject button with X icon */}
                     <button
@@ -251,7 +320,8 @@ const Approvals = () => {
                     </button>
                   </td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -326,10 +396,24 @@ const Approvals = () => {
                     handleApprove(selectedCredit.id);
                     setDetailsModalOpen(false);
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  disabled={processingIds.has(selectedCredit.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    processingIds.has(selectedCredit.id)
+                      ? "bg-gray-400 cursor-not-allowed text-white"
+                      : "bg-green-600 text-white hover:bg-green-700"
+                  }`}
                 >
-                  <Check size={16} />
-                  Approve
+                  {processingIds.has(selectedCredit.id) ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={16} />
+                      Approve
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={() => {
