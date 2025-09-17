@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const API_BASE = "http://localhost:3001";
 
   useEffect(() => {
     // Check if user is logged in on app start
@@ -44,7 +45,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch("http://localhost:3001/api/login", {
+      const response = await fetch(`${API_BASE}/api/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -77,14 +78,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signup = async (email, password, name, phone) => {
+  const signup = async (email, password, name, phone, mpin) => {
     try {
-      const response = await fetch("http://localhost:3001/api/signup", {
+      const response = await fetch(`${API_BASE}/api/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password, name, phone }),
+        body: JSON.stringify({ email, password, name, phone, mpin }),
       });
 
       if (response.ok) {
@@ -104,7 +105,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      const response = await fetch("http://localhost:3001/api/logout", {
+      const response = await fetch(`${API_BASE}/api/logout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -138,7 +139,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('authToken');
       if (!token) return;
 
-      const response = await fetch("http://localhost:3001/api/user-profile", {
+      const response = await fetch(`${API_BASE}/api/user-profile`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -160,6 +161,155 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Resend email verification
+  const resendEmailVerification = async (email) => {
+    try {
+      const response = await fetch(`${API_BASE}/api/resend-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to send email');
+      toast.success('Verification email sent');
+      return { success: true };
+    } catch (e) {
+      toast.error(e.message || 'Failed to send email');
+      return { success: false, error: e.message };
+    }
+  };
+
+  // Forgot password (email link)
+  const forgotPassword = async (email) => {
+    try {
+      // Verify email exists using available admin endpoint before sending reset
+      const usersRes = await fetch(`${API_BASE}/api/all-users`);
+      let exists = false;
+      if (usersRes.ok) {
+        const users = await usersRes.json();
+        exists = Array.isArray(users) && users.some(u => u.email?.toLowerCase() === email.toLowerCase());
+      }
+      if (!exists) {
+        toast.error('Email is not registered');
+        return { success: false, error: 'Email not registered' };
+      }
+
+      const response = await fetch(`${API_BASE}/api/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed');
+      toast.success('Password reset email sent');
+      return { success: true };
+    } catch (e) {
+      toast.error(e.message || 'Failed to send reset email');
+      return { success: false, error: e.message };
+    }
+  };
+
+  // Reset password with tokens from URL
+  const resetPassword = async ({ access_token, refresh_token, new_password }) => {
+    try {
+      const response = await fetch(`${API_BASE}/api/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token, refresh_token, new_password })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed');
+      toast.success('Password updated');
+      return { success: true };
+    } catch (e) {
+      toast.error(e.message || 'Failed to reset password');
+      return { success: false, error: e.message };
+    }
+  };
+
+  // Notifications
+  const getNotifications = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) return [];
+      const response = await fetch(`${API_BASE}/api/notifications`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to fetch');
+      return result.notifications || [];
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const markNotificationRead = async (id) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) return false;
+      const response = await fetch(`${API_BASE}/api/notifications/${id}/read`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      return response.ok;
+    } catch (e) { return false; }
+  };
+
+  const markAllNotificationsRead = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) return false;
+      const response = await fetch(`${API_BASE}/api/notifications/read-all`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      return response.ok;
+    } catch (e) { return false; }
+  };
+
+  // Profile update (name, phone, mpin)
+  const updateProfile = async ({ name, phone, mpin }) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) throw new Error('Not authenticated');
+      const response = await fetch(`${API_BASE}/api/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ name, phone, mpin })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed');
+      // Refresh user profile
+      await refreshUserData();
+      toast.success('Profile updated');
+      return { success: true };
+    } catch (e) {
+      toast.error(e.message || 'Failed to update');
+      return { success: false, error: e.message };
+    }
+  };
+
+  // Add balance
+  const addBalance = async (amount) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) throw new Error('Not authenticated');
+      const response = await fetch(`${API_BASE}/api/profile/add-balance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ amount })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed');
+      await refreshUserData();
+      toast.success('Balance added');
+      return { success: true, newBalance: result.new_balance };
+    } catch (e) {
+      toast.error(e.message || 'Failed to add balance');
+      return { success: false, error: e.message };
+    }
+  };
+
   const value = {
     user,
     isLoggedIn: !!user,
@@ -170,6 +320,14 @@ export const AuthProvider = ({ children }) => {
     logout,
     checkAuthStatus,
     refreshUserData,
+    resendEmailVerification,
+    forgotPassword,
+    resetPassword,
+    getNotifications,
+    markNotificationRead,
+    markAllNotificationsRead,
+    updateProfile,
+    addBalance,
   };
 
   return (

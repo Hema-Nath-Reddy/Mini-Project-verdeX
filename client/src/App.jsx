@@ -9,6 +9,9 @@ import Admin from "./pages/Admin";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import CreditDetail from "./pages/CreditDetail";
+import ResetPassword from "./pages/ResetPassword";
+import ForgotPassword from "./pages/ForgotPassword";
 
 function App() {
   const routes = [
@@ -24,6 +27,18 @@ function App() {
         {
           path: "/marketplace",
           element: <MarketPlace />,
+        },
+        {
+          path: "/credit/:id",
+          element: <CreditDetail />,
+        },
+        {
+          path: "/reset-password",
+          element: <ResetPassword />,
+        },
+        {
+          path: "/forgot-password",
+          element: <ForgotPassword />,
         },
         {
           path: "/login",

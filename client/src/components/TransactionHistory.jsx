@@ -142,7 +142,7 @@ const TransactionHistory = () => {
     : [];
 
   return (
-    <div className="ml-80 flex flex-col w-250">
+    <div className="ml-80 flex flex-col w-250 min-h-screen">
       <p className="text-left text-3xl font-extrabold">
         Transaction<span className="text-[#098409]">&nbsp;History</span>
       </p>
@@ -205,6 +205,7 @@ const TransactionHistory = () => {
           </table>
         </div>
       </div>
+      <div className="mb-8" />
     </div>
   );
 };

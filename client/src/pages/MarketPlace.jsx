@@ -2,52 +2,29 @@ import React from "react";
 import { Search, ChevronDown, ChevronUp, X } from "lucide-react"; // Import the X icon
 import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
+import { EyeClosed, Eye } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
 
 const MarketPlace = (props) => {
   const { user, refreshUserData } = useAuth();
+  const navigate = useNavigate();
   const [priceToggle, setPriceToggle] = useState(true);
   const [companyToggle, setCompanyToggle] = useState(true);
   const [activeSort, setActiveSort] = useState(null);
   const [carbonCredits, setCarbonCredits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedCredit, setSelectedCredit] = useState(null);
+  const [buyQty, setBuyQty] = useState("");
+  const [buyMpin, setBuyMpin] = useState("");
+  const [showMpin, setShowMpin] = useState(false);
 
   const { data } = props;
 
-  const defaultData = [
-    {
-      company: "EcoSolutions Inc.",
-      creditsAvailable: "15,000",
-      pricePerCredit: "₹2,075",
-      trendValue: 75,
-    },
-    {
-      company: "GreenFuture Corp.",
-      creditsAvailable: "22,000",
-      pricePerCredit: "₹2,320",
-      trendValue: 50,
-    },
-    {
-      company: "Sustainable Ventures",
-      creditsAvailable: "18,000",
-      pricePerCredit: "₹2,158",
-      trendValue: 25,
-    },
-    {
-      company: "CleanTech Industries",
-      creditsAvailable: "12,000",
-      pricePerCredit: "₹1,992",
-      trendValue: 100,
-    },
-    {
-      company: "EarthGuard Solutions",
-      creditsAvailable: "20,000",
-      pricePerCredit: "₹2,239",
-      trendValue: 0,
-    },
-  ];
+  const defaultData = [];
 
   // Fetch carbon credits from API
   useEffect(() => {
@@ -71,12 +48,10 @@ const MarketPlace = (props) => {
           }));
           setCarbonCredits(formattedData);
         } else {
-          console.error("Failed to fetch carbon credits");
-          setCarbonCredits(defaultData);
+          setCarbonCredits([]);
         }
       } catch (error) {
-        console.error("Error fetching carbon credits:", error);
-        setCarbonCredits(defaultData);
+        setCarbonCredits([]);
       } finally {
         setLoading(false);
       }
@@ -85,7 +60,9 @@ const MarketPlace = (props) => {
     fetchCarbonCredits();
   }, []);
 
-  const initialData = data || carbonCredits.length > 0 ? carbonCredits : defaultData;
+  // Allow scroll during modal per request (reverted lock)
+
+  const initialData = data || (carbonCredits.length > 0 ? carbonCredits : defaultData);
   const [displayData, setDisplayData] = useState(initialData);
 
   // Update display data when carbon credits change
@@ -127,69 +104,57 @@ const MarketPlace = (props) => {
     company_desc: "Company: Z-A",
   };
 
-  const handleBuyCredit = async (creditId, sellerId, quantity, pricePerCredit) => {
-    // Validate required data
+  const handleBuyCredit = (credit) => {
     if (!user?.id) {
       toast.error("Please log in to purchase credits");
       return;
     }
-    
-    if (!sellerId) {
-      toast.error("Invalid seller information");
-      return;
-    }
-    
-    if (!quantity || !pricePerCredit) {
-      toast.error("Invalid quantity or price");
-      return;
-    }
+    setSelectedCredit(credit);
+    setBuyQty("");
+    setBuyMpin("");
+    setShowMpin(false);
+    setModalOpen(true);
+  };
 
-    // Calculate total amount
-    const totalAmount = parseInt(quantity) * parseFloat(pricePerCredit);
-    
-    // Check if user has sufficient balance
+  const submitPurchase = async () => {
+    if (!selectedCredit) return;
+    const maxAvailable = parseInt(selectedCredit.creditsAvailable);
+    const pricePerCredit = parseFloat(selectedCredit.pricePerCredit.replace(/[^0-9.-]+/g, ""));
+    const quantity = parseInt(buyQty);
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      toast.error("Enter a valid quantity");
+      return;
+    }
+    if (quantity > maxAvailable) {
+      toast.error(`Max available is ${maxAvailable}`);
+      return;
+    }
+    if (!/^\d{4,6}$/.test(buyMpin)) {
+      toast.error("Enter a valid 4-6 digit MPIN");
+      return;
+    }
+    const totalAmount = quantity * pricePerCredit;
     if (user.balance < totalAmount) {
-      toast.error(`Insufficient balance. You need ₹${totalAmount} but have ₹${user.balance}`);
+      toast.error(`Insufficient balance. Need ₹${totalAmount}`);
       return;
     }
-
-    // Show confirmation dialog
-    const confirmed = window.confirm(
-      `Purchase ${quantity} credits for ₹${totalAmount}?\n\n` +
-      `Price per credit: ₹${pricePerCredit}\n` +
-      `Quantity: ${quantity}\n` +
-      `Total: ₹${totalAmount}\n` +
-      `Your balance after purchase: ₹${user.balance - totalAmount}`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+    // Validate required data
     try {
-      console.log("Purchase request:", {
-        creditId,
-        buyer_id: user.id,
-        seller_id: sellerId,
-        quantity: parseInt(quantity),
-        amount: totalAmount
-      });
-
-      const response = await fetch(`http://localhost:3001/api/buy-carbon-credit/${creditId}`, {
+      const response = await fetch(`http://localhost:3001/api/buy-carbon-credit/${selectedCredit.id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           buyer_id: user.id,
-          seller_id: sellerId,
-          quantity: parseInt(quantity),
-          amount: totalAmount,
+          requested_quantity: quantity,
+          mpin: buyMpin,
         }),
       });
 
       if (response.ok) {
         toast.success("Credit purchased successfully!");
+        setModalOpen(false);
         
         // Refresh user data to update balance
         await refreshUserData();
@@ -351,7 +316,7 @@ const MarketPlace = (props) => {
                       className="border-b border-gray-100 hover:bg-gray-50"
                     >
                       <td className="py-6 px-6 text-gray-900 font-medium">
-                        {row.company}
+                        <button className="hover:underline" onClick={() => row.id && navigate(`/credit/${row.id}`)}>{row.company}</button>
                       </td>
                       <td className="py-6 px-6 text-gray-600">
                         {row.creditsAvailable}
@@ -375,10 +340,10 @@ const MarketPlace = (props) => {
                       <td className="py-6 px-6">
                         {user ? (
                           <button 
-                            onClick={() => handleBuyCredit(row.id, row.seller_id, row.creditsAvailable, row.pricePerCredit.replace(/[^0-9.-]+/g, ""))}
-                            className="bg-gray-400 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-[#098409] transition-colors duration-200 cursor-pointer"
+                            onClick={() => handleBuyCredit(row)}
+                            className="bg-[#098409] text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-400 transition-colors duration-200 cursor-pointer"
                           >
-                            Buy
+                            BUY
                           </button>
                         ) : (
                           <span className="text-gray-400 text-sm">Login to buy</span>
@@ -386,12 +351,89 @@ const MarketPlace = (props) => {
                       </td>
                     </tr>
                   ))}
+                  {loading && (
+                    <tr>
+                      <td colSpan="5" className="py-8 px-6 text-center text-gray-600">
+                        Loading credits...
+                      </td>
+                    </tr>
+                  )}
+                  {!loading && displayData.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="py-8 px-6 text-center text-gray-600">
+                        No credits available at the moment. Please try again later.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
       </div>
+      {modalOpen && selectedCredit && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center">
+          <div className="absolute inset-0 bg-[#f0ffed]/80 backdrop-blur-sm" onClick={() => setModalOpen(false)}></div>
+          <div className="relative bg-[#f0ffed] rounded-2xl shadow-xl border border-gray-200 w-[28rem] max-w-[90%] p-6">
+            <div className="text-xl font-bold mb-1">Buy Credits</div>
+            <div className="text-sm text-gray-600 mb-4">{selectedCredit.company}</div>
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Available</span>
+                <span className="font-medium">{selectedCredit.creditsAvailable}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Price/Credit</span>
+                <span className="font-medium">{selectedCredit.pricePerCredit}</span>
+              </div>
+              <div className="relative">
+                <input
+                  type="number"
+                  className="peer w-full h-11 border border-[#098409] rounded-lg p-2 placeholder-transparent focus:outline-none focus:border-[#076a07]"
+                  placeholder="Quantity"
+                  value={buyQty}
+                  onChange={(e) => setBuyQty(e.target.value)}
+                  min={1}
+                  max={parseInt(selectedCredit.creditsAvailable)}
+                />
+                <label className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]">Quantity</label>
+              </div>
+              <div className="relative">
+                <input
+                  type={showMpin ? "text" : "password"}
+                  className="peer w-full h-11 border border-[#098409] rounded-lg p-2 pr-10 placeholder-transparent focus:outline-none focus:border-[#076a07]"
+                  placeholder="MPIN (4-6 digits)"
+                  value={buyMpin}
+                  onChange={(e) => setBuyMpin(e.target.value)}
+                  maxLength={6}
+                />
+                <label className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]">MPIN (4-6 digits)</label>
+                {!showMpin ? (
+                  <EyeClosed onClick={() => setShowMpin(true)} className="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-600" />
+                ) : (
+                  <Eye onClick={() => setShowMpin(false)} className="w-5 h-5 absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer text-gray-600" />
+                )}
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-sm text-gray-600">Total</span>
+                <span className="text-lg font-bold text-[#098409]">₹{(() => {
+                  const q = parseInt(buyQty || '0');
+                  const p = parseFloat(selectedCredit.pricePerCredit.replace(/[^0-9.-]+/g, ""));
+                  const v = Number.isFinite(q) && q > 0 ? q * p : 0;
+                  return v.toFixed(2);
+                })()}</span>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <button onClick={() => setModalOpen(false)} className="flex-1 h-10 bg-gray-100 border border-gray-300 rounded-lg cursor-pointer">Cancel</button>
+                <button onClick={submitPurchase} className="flex-1 h-10 bg-[#00000025] border border-[#098409] text-black hover:bg-[#a7f7a7bb] rounded-lg hover:text-[#098409] font-bold cursor-pointer transition-all">Confirm</button>
+              </div>
+              {buyQty && parseInt(buyQty) > parseInt(selectedCredit.creditsAvailable) && (
+                <div className="text-sm text-red-600">Quantity exceeds available credits.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       <Toaster position="bottom-right" />
     </div>
   );

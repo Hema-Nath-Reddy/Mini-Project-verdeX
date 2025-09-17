@@ -1,4 +1,4 @@
-import { React, useState } from "react";
+import { React, useState, useMemo } from "react";
 import { UploadCloud } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { useAuth } from "../contexts/AuthContext";
@@ -8,7 +8,7 @@ const ListCredits = () => {
 
   if (!user) {
     return (
-      <div className="ml-80 flex flex-col">
+      <div className="ml-80 flex flex-col min-h-screen">
         <p className="text-left text-3xl font-extrabold">
           List<span className="text-[#098409]">&nbsp;Credits</span>
         </p>
@@ -20,16 +20,22 @@ const ListCredits = () => {
   }
   const [quantity, setQuantity] = useState("");
   const [type, setType] = useState("");
-  const [price, setPrice] = useState("");
   const [pricePerCredit, setPricePerCredit] = useState("");
   const [issueDate, setIssueDate] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
-  const [trendValue, setTrendValue] = useState("");
+  const [trendValue, setTrendValue] = useState("0");
   const [fileName, setFileName] = useState("No file chosen");
   const [loading, setLoading] = useState(false);
+
+  const totalPrice = useMemo(() => {
+    const q = Number(quantity || 0);
+    const p = Number(pricePerCredit || 0);
+    if (q > 0 && p > 0) return (q * p).toFixed(2);
+    return "";
+  }, [quantity, pricePerCredit]);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -59,7 +65,7 @@ const ListCredits = () => {
 
       // Add all form fields
       formData.append("seller_id", user?.id || "current-user-id");
-      formData.append("price", price);
+      formData.append("price", Number(quantity || 0) * Number(pricePerCredit || 0));
       formData.append("price_per_credit", pricePerCredit);
       formData.append("issue_date", issueDate);
       formData.append("expiry_date", expiryDate);
@@ -70,8 +76,14 @@ const ListCredits = () => {
       formData.append("description", description);
       formData.append("location", location);
 
+      // Get auth token
+      const token = localStorage.getItem('authToken');
+      
       const response = await fetch("http://localhost:3001/api/create-carbon-credit", {
         method: "POST",
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData,
       });
 
@@ -80,8 +92,7 @@ const ListCredits = () => {
         // Reset form
       setQuantity("");
       setType("");
-      setPrice("");
-        setPricePerCredit("");
+      setPricePerCredit("");
         setIssueDate("");
         setExpiryDate("");
         setName("");
@@ -103,16 +114,16 @@ const ListCredits = () => {
   };
 
   return (
-    <div className="ml-80 flex flex-col">
+    <div className="ml-80 flex flex-col min-h-screen">
       <p className="text-left text-3xl font-extrabold">
         List<span className="text-[#098409]">&nbsp;Credits</span>
       </p>
 
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col items-center w-100"
+        className="w-[60rem] max-w-[90vw] mt-4 grid grid-cols-1 md:grid-cols-2 gap-5"
       >
-        <div className="relative w-full mt-4">
+        <div className="relative w-full">
           <input
             type="number"
             id="quantity"
@@ -124,14 +135,32 @@ const ListCredits = () => {
           />
           <label
             htmlFor="quantity"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all 
-                         peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 
-                         peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
           >
             Quantity
           </label>
         </div>
-        <div className="relative w-full mt-4">
+
+        <div className="relative w-full">
+          <input
+            type="number"
+            id="pricePerCredit"
+            className="peer w-full h-11 border border-[#098409] rounded-lg p-2 placeholder-transparent focus:outline-none focus:border-[#076a07]"
+            placeholder="Price Per Credit"
+            value={pricePerCredit}
+            onChange={(e) => setPricePerCredit(e.target.value)}
+            step="0.01"
+            required
+          />
+          <label
+            htmlFor="pricePerCredit"
+            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+          >
+            Price Per Credit (₹)
+          </label>
+        </div>
+
+        <div className="relative w-full">
           <select
             id="type"
             className="peer w-full h-11 border border-[#098409] rounded-lg p-2 focus:outline-none focus:border-[#076a07]"
@@ -154,49 +183,41 @@ const ListCredits = () => {
           </label>
         </div>
 
-        <div className="relative w-full mt-4">
+        <div className="relative w-full opacity-70">
           <input
-            type="number"
+            type="text"
             id="price"
-            className="peer w-full h-11 border border-[#098409] rounded-lg p-2 placeholder-transparent focus:outline-none focus:border-[#076a07]"
+            className="peer w-full h-11 border border-[#098409] rounded-lg p-2 bg-gray-100 placeholder-transparent focus:outline-none"
             placeholder="Total Price"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            step="0.01"
-            required
+            value={totalPrice}
+            readOnly
           />
           <label
             htmlFor="price"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all 
-                         peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 
-                         peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1"
           >
             Total Price (₹)
           </label>
         </div>
 
-        <div className="relative w-full mt-4">
-          <input
-            type="number"
-            id="pricePerCredit"
-            className="peer w-full h-11 border border-[#098409] rounded-lg p-2 placeholder-transparent focus:outline-none focus:border-[#076a07]"
-            placeholder="Price Per Credit"
-            value={pricePerCredit}
-            onChange={(e) => setPricePerCredit(e.target.value)}
-            step="0.01"
+        <div className="relative w-full md:col-span-2">
+          <textarea
+            id="description"
+            className="peer w-full h-20 border border-[#098409] rounded-lg p-2 placeholder-transparent focus:outline-none focus:border-[#076a07] resize-none"
+            placeholder="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             required
           />
           <label
-            htmlFor="pricePerCredit"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all 
-                         peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 
-                         peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            htmlFor="description"
+            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
           >
-            Price Per Credit (₹)
+            Description
           </label>
         </div>
 
-        <div className="relative w-full mt-4">
+        <div className="relative w-full">
           <input
             type="text"
             id="name"
@@ -208,34 +229,13 @@ const ListCredits = () => {
           />
           <label
             htmlFor="name"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all 
-                         peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 
-                         peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
           >
             Project Name
           </label>
         </div>
 
-        <div className="relative w-full mt-4">
-          <textarea
-            id="description"
-            className="peer w-full h-20 border border-[#098409] rounded-lg p-2 placeholder-transparent focus:outline-none focus:border-[#076a07] resize-none"
-            placeholder="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-          />
-          <label
-            htmlFor="description"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all 
-                         peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 
-                         peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
-          >
-            Description
-          </label>
-        </div>
-
-        <div className="relative w-full mt-4">
+        <div className="relative w-full">
           <input
             type="text"
             id="location"
@@ -247,15 +247,13 @@ const ListCredits = () => {
           />
           <label
             htmlFor="location"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all 
-                         peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 
-                         peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
           >
             Location
           </label>
         </div>
 
-        <div className="relative w-full mt-4">
+        <div className="relative w-full">
           <input
             type="date"
             id="issueDate"
@@ -266,15 +264,13 @@ const ListCredits = () => {
           />
           <label
             htmlFor="issueDate"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all 
-                         peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 
-                         peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
           >
             Issue Date
           </label>
         </div>
 
-        <div className="relative w-full mt-4">
+        <div className="relative w-full">
           <input
             type="date"
             id="expiryDate"
@@ -285,37 +281,26 @@ const ListCredits = () => {
           />
           <label
             htmlFor="expiryDate"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all 
-                         peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 
-                         peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
           >
             Expiry Date
           </label>
         </div>
 
-        <div className="relative w-full mt-4">
+        <div className="relative w-full md:col-span-2">
+          <label htmlFor="trendValue" className="text-sm text-gray-600">Trend Value: {trendValue || 0}</label>
           <input
-            type="number"
+            type="range"
             id="trendValue"
-            className="peer w-full h-11 border border-[#098409] rounded-lg p-2 placeholder-transparent focus:outline-none focus:border-[#076a07]"
-            placeholder="Trend Value (0-100)"
+            className="w-full accent-[#098409]"
             value={trendValue}
             onChange={(e) => setTrendValue(e.target.value)}
             min="0"
             max="100"
-            required
           />
-          <label
-            htmlFor="trendValue"
-            className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all 
-                         peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 
-                         peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
-          >
-            Trend Value (0-100)
-          </label>
         </div>
 
-        <div className="w-full mt-6">
+        <div className="w-full md:col-span-2">
           <label
             htmlFor="file-upload"
             className="w-full flex items-center justify-center gap-2 h-11 border border-dashed border-[#098409] rounded-lg p-2 text-gray-500 cursor-pointer hover:bg-gray-50"
@@ -333,17 +318,19 @@ const ListCredits = () => {
           <p className="text-sm text-gray-500 mt-1 text-center">{fileName}</p>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className={
-            loading
-              ? "w-full h-10 mt-6 bg-[#00000025] border border-[#098409] text-black rounded-lg cursor-not-allowed"
-              : "w-full h-10 mt-6 bg-[#00000025] border border-[#098409] text-black hover:bg-[#a7f7a7bb] rounded-lg hover:text-[#098409] font-bold cursor-pointer transition-all duration-300"
-          }
-        >
-          {loading ? "Listing..." : "LIST CREDITS"}
-        </button>
+        <div className="md:col-span-2">
+          <button
+            type="submit"
+            disabled={loading}
+            className={
+              loading
+                ? "w-full h-10 mt-2 mb-5 bg-[#00000025] border border-[#098409] text-black rounded-lg cursor-not-allowed"
+                : "w-full h-10 mt-2 mb-5 bg-[#00000025] border border-[#098409] text-black hover:bg-[#a7f7a7bb] rounded-lg hover:text-[#098409] font-bold cursor-pointer transition-all duration-300"
+            }
+          >
+            {loading ? "Listing..." : "LIST CREDITS"}
+          </button>
+        </div>
       </form>
 
       <Toaster position="bottom-right" />

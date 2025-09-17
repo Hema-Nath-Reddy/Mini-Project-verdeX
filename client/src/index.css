@@ -80,6 +80,7 @@ input::selection {
   top: 0;
   left: 0;
   background-color: #c6dac2;
+  z-index: 10;
 }
 
 .left-nav a {

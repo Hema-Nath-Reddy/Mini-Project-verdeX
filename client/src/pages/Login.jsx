@@ -15,6 +15,7 @@ const Login = () => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mpin, setMpin] = useState("");
 
   // Redirect if already logged in
   React.useEffect(() => {
@@ -31,12 +32,13 @@ const Login = () => {
     
     try {
       if (isSignup) {
-        const result = await signup(email, password, name, phone);
+        const result = await signup(email, password, name, phone, mpin);
         if (result.success) {
           setEmail("");
           setPassword("");
           setName("");
           setPhone("");
+          setMpin("");
           setIsSignup(false); // Switch to login form after successful signup
         }
       } else {
@@ -52,6 +54,10 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const goToForgotPassword = () => {
+    navigate('/forgot-password');
   };
 
   return (
@@ -109,6 +115,26 @@ const Login = () => {
                   className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
                 >
                   Phone Number
+                </label>
+              </div>
+              <div className="relative w-full mt-4">
+                <input
+                  type="password"
+                  id="mpin"
+                  className="peer w-full h-10 border border-[#098409] rounded-lg p-2 placeholder-transparent focus:outline-none focus:border-[#076a07]"
+                  placeholder="MPIN (4-6 digits)"
+                  value={mpin}
+                  onChange={(e) => setMpin(e.target.value)}
+                  minLength={4}
+                  maxLength={6}
+                  pattern="\\d{4,6}"
+                  required
+                />
+                <label
+                  htmlFor="mpin"
+                  className="absolute left-2 -top-2.5 text-sm text-gray-600 bg-[#f0ffed] px-1 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:text-[#098409]"
+                >
+                  MPIN (4-6 digits)
                 </label>
               </div>
             </>
@@ -173,6 +199,11 @@ const Login = () => {
           >
             {loading ? "Loading..." : isSignup ? "SIGN UP" : "LOGIN"}
           </button>
+          {!isSignup && (
+            <div className="w-full flex items-center justify-end mt-3 text-sm">
+              <span onClick={goToForgotPassword} className="cursor-pointer font-semibold text-[#098409] hover:text-black transition-all duration-300">Forgot password?</span>
+            </div>
+          )}
         </form>
 
         <Toaster position="bottom-right" />

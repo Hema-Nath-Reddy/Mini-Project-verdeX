@@ -2,7 +2,7 @@ import React from "react";
 import { Leaf } from "lucide-react";
 const Footer = () => {
   return (
-    <footer className="w-full bg-white border-t border-gray-300 mt-8">
+    <footer className="w-full bg-white border-t border-gray-300 mt-8 relative z-[100]">
       <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col items-center text-center gap-2">
         <div className="flex items-center gap-2 font-bold text-lg">
           <Leaf color="#098409" size={20} />
