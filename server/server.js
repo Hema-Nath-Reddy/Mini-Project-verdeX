@@ -76,7 +76,17 @@ function verifyMPIN(inputMPIN, storedEncryptedMPIN) {
     const parts = storedEncryptedMPIN.split(':');
     const ivHex = parts[0];
     const storedCipherHex = parts.slice(1).join(':');
-    const recomputedCipherHex = encryptMPINWithIV(String(inputMPIN), ivHex);
+    let normalizedInput = String(inputMPIN).trim();
+    // best-effort normalization: ensure only digits 1-6 length
+    if (!/^\d{1,6}$/.test(normalizedInput)) return false;
+
+    // If we can decrypt, use original length to preserve leading zeros via padding
+    const originalPlain = decryptMPIN(storedEncryptedMPIN);
+    if (originalPlain && /^\d{4,6}$/.test(originalPlain) && normalizedInput.length < originalPlain.length) {
+      normalizedInput = normalizedInput.padStart(originalPlain.length, '0');
+    }
+
+    const recomputedCipherHex = encryptMPINWithIV(normalizedInput, ivHex);
     if (!recomputedCipherHex) return false;
     // constant-time compare
     return crypto.timingSafeEqual(Buffer.from(recomputedCipherHex, 'hex'), Buffer.from(storedCipherHex, 'hex'));
@@ -883,7 +893,7 @@ app.post("/api/create-carbon-credit", upload.any(), async (req, res) => {
 
     // Try to upload file to storage
     try {
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabaseAdmin.storage
         .from("carbon-credits")
         .upload(filename, file.buffer, {
           contentType: file.mimetype,
@@ -895,7 +905,7 @@ app.post("/api/create-carbon-credit", upload.any(), async (req, res) => {
         verification_document_url = "file_upload_failed";
       } else {
         // Generate signed URL for private access (valid for 1 hour)
-        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
           .from("carbon-credits")
           .createSignedUrl(filename, 3600); // 1 hour expiry
 
@@ -1256,8 +1266,9 @@ app.post("/api/buy-carbon-credit/:id", async (req, res) => {
       });
     }
 
-    // Validate MPIN format
-    if (mpin.length < 4 || mpin.length > 6) {
+    // Normalize and validate MPIN format
+    const mpinString = String(mpin).trim();
+    if (!/^\d{4,6}$/.test(mpinString)) {
       return res.status(400).json({ 
         error: "MPIN must be 4-6 digits" 
       });
@@ -1311,7 +1322,7 @@ app.post("/api/buy-carbon-credit/:id", async (req, res) => {
       });
     }
 
-    const isMPINValid = verifyMPIN(mpin, buyerData.mpin);
+    const isMPINValid = verifyMPIN(mpinString, buyerData.mpin);
     if (!isMPINValid) {
       return res.status(401).json({ 
         error: "Invalid MPIN. Please check your MPIN and try again." 
