@@ -1140,14 +1140,14 @@ app.get("/api/carbon-credit/:id", async (req, res) => {
     }
 
     // Generate fresh signed URL for the verification document
-    if (data.verification_document_url) {
-      // Extract filename from the stored URL
-      const urlParts = data.verification_document_url.split('/');
-      const filename = urlParts[urlParts.length - 1];
-      
-      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+    if (data.verification_document_url && !["file_upload_failed","url_generation_failed","storage_error"].includes(data.verification_document_url)) {
+      // Extract object name relative to bucket
+      const storedUrl = data.verification_document_url;
+      const afterBucket = storedUrl.split('/carbon-credits/')[1] || storedUrl;
+      const objectName = afterBucket.split('?')[0];
+      const { data: signedUrlData, error: signedUrlError } = await supabaseAdmin.storage
         .from("carbon-credits")
-        .createSignedUrl(filename, 3600); // 1 hour expiry
+        .createSignedUrl(objectName, 3600); // 1 hour expiry
 
       if (!signedUrlError && signedUrlData) {
         data.verification_document_url = signedUrlData.signedUrl;
